@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=PikaOS Driver Manager
+Exec=pika-drivers
+Icon=pika-drivers
+Terminal=false
+Type=Application
+Encoding=UTF-8
+Categories=Application;System;Settings;XFCE;X-XFCE-SettingsDialog;X-XFCE-SystemSettings;
+StartupNotify=true
