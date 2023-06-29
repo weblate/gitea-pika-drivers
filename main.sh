@@ -1,6 +1,7 @@
 # Clone Upstream
 mkdir -p pika-drivers
 cp -rvf ./* ./pika-drivers/
+cd ./pika-drivers/
 
 # Get build deps
 apt-get build-dep ./ -y
