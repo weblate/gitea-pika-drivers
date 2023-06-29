@@ -13,7 +13,7 @@ fi
 ### Check for xbox equipment
 if lsusb | grep -i xbox  &> /dev/null
 then
-	DRIVERS="$DRIVERS xone-dkms xpadneo"
+	DRIVERS="$DRIVERS xone-dkms"
 fi
 
 ### If no drivers were found set them to random hash to trigger no drivers needed dialog in gui app
