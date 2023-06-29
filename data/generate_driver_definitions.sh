@@ -6,13 +6,13 @@ UBUNTU_DRIVERS="$(ubuntu-drivers list | grep -vi -server)"
 ### advanced micro devices graphics cards with "radeon" module only do not support the additional drivers
 if inxi -G | grep " loaded" | grep "amdgpu" &> /dev/null
 then
-	AMDGPU_DRIVERS="$(echo -e "rocm-compute-runtime\nvulkan-amdgpu-pro\namf-amdgpu-pro\namdvlk\nopencl-legacy-amdgpu-pro-icd\namdgpu-pro-oglp")"
+	AMDGPU_DRIVERS="$(echo -e "pika-rocm-meta\nvulkan-amdgpu-pro\namf-amdgpu-pro\namdvlk\nopencl-legacy-amdgpu-pro-icd\namdgpu-pro-oglp")"
 fi
 
 ### Check for xbox equipment
 if lsusb | grep -i xbox  &> /dev/null
 then
-	XONE_DRIVERS="$(echo -e "xbox-controller-drivers")"
+	XONE_DRIVERS="$(echo -e "xone-dkms")"
 fi
 
 ### Merge all drivers together
