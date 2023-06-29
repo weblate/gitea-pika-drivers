@@ -1,12 +1,11 @@
 use std::process::Command;
 use gtk::prelude::*;
 use gtk::*;
-use vte::*;
 use glib::*;
 
 fn main() {
     let app = Application::builder()
-        .application_id("com.pika-os.driver-manager")
+        .application_id("com.pika.drivers")
         .build();
         
     app.connect_activate(build_ui);
@@ -33,7 +32,7 @@ fn build_ui(app: &Application) {
         
     main_box.append(&drivers_list_row);
 
-
+    println!("Checking HW paramter script for available drivers:\n");
     let ubuntu_drivers_list_cli = Command::new("/usr/bin/echo")
                          .arg("test1\ntest2\ntest3\ntest4")
                          .output()
@@ -117,18 +116,26 @@ fn build_ui(app: &Application) {
 
     
 fn modify_package(package: &str, driver_button: &Button) {
+    println!("Start installing driver {}: ", package);
     let wrapper_command = Command::new("x-terminal-emulator")
             .args(["-e", "bash", "-c", "apt install jaj"])
             .output()
             .unwrap();
     if wrapper_command.status.success() {
+        println!("Installation Command has ended.\n");
+        println!("Installation was successful!\n");
+        println!("Refreshing GUI Labels.\n");
         driver_button_refresh(package, driver_button);
     } else {
+        println!("Installation Command has ended.\n");
+        println!("Installation was failed :(\n");
+        println!("Refreshing GUI Labels.\n");
         driver_button_refresh(package, driver_button);
+        println!("Sending error message.\n");
         let _error_command = Command::new("zenity")
             .args(["--error", "--text", "There was an error instaling", package])
             .spawn()
-            .expect("x-terminal-emulator command failed to start");
+            .expect("Failed to start pika-drivers error dialog");
     }
 }
 
@@ -138,10 +145,10 @@ fn driver_button_refresh(driver: &str, driver_button: &Button) {
         .output()
         .unwrap();
     if driver_command.status.success() {
-            println!("hshsahsa");
+            println!("Checking Driver Presence of {}: Success!", driver);
             driver_button.set_icon_name("user-trash-symbolic");
     } else {
-            println!("hshsahsasfgfd");
+            println!("Checking Driver Presence of {}: Failure! Driver isn't installed", driver);
             driver_button.set_icon_name("go-down-symbolic");
     }
 }

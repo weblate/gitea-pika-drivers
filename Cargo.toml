@@ -1,5 +1,5 @@
 [package]
-name = "test-gtk4-libadw-app"
+name = "pika-drivers"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,5 +7,3 @@ edition = "2021"
 
 [dependencies]
 gtk = { version = "0.6.6", package = "gtk4" }
-tokio = { features = ["full"] }
-vte = { version = "0.6.0", package = "vte4" }
