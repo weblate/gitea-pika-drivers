@@ -34,7 +34,7 @@ fn build_ui(app: &Application) {
 
     println!("Checking HW paramter script for available drivers:\n");
     let ubuntu_drivers_list_cli = Command::new("/usr/bin/echo")
-                         .arg("test1\ntest2\ntest3\ntest4")
+                         .arg("nvidia-driver-680\ntest2\ntest3\ntest4")
                          .output()
                          .expect("failed to execute process");
     
@@ -146,9 +146,19 @@ fn driver_button_refresh(driver: &str, driver_button: &Button) {
         .unwrap();
     if driver_command.status.success() {
             println!("Checking Driver Presence of {}: Success!", driver);
-            driver_button.set_icon_name("user-trash-symbolic");
+            if driver.contains("nvidia") {
+                driver_button.set_tooltip_text(Some("This uninstall and revert to nouveau"));
+            } else {
+                driver_button.set_tooltip_text(Some("This uninstall the driver"));
+            }
+                driver_button.set_icon_name("user-trash-symbolic");
     } else {
             println!("Checking Driver Presence of {}: Failure! Driver isn't installed", driver);
+            if driver.contains("nvidia") {
+                driver_button.set_tooltip_text(Some("This will remove nouveau and install"));
+            } else {
+                driver_button.set_tooltip_text(Some("Install"));
+            }
             driver_button.set_icon_name("go-down-symbolic");
     }
 }
