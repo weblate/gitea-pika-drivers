@@ -34,7 +34,7 @@ fn build_ui(app: &Application) {
 
     println!("Checking HW paramter script for available drivers:\n");
     let ubuntu_drivers_list_cli = Command::new("bash")
-                         .arg("-c", "/usr/lib/pika/drivers/generate_driver_definitions.sh")
+                         .args("-c", "/usr/lib/pika/drivers/generate_driver_definitions.sh")
                          .output()
                          .expect("failed to execute process");
     
@@ -133,7 +133,7 @@ fn modify_package(package: &str, driver_button: &Button) {
         driver_button_refresh(package, driver_button);
         println!("Sending error message.\n");
         let _error_command = Command::new("bash")
-            .arg("-c", "/usr/lib/pika/drivers/dialog-error.sh", package)
+            .args("-c", "/usr/lib/pika/drivers/dialog-error.sh", package)
             .spawn()
             .expect("Failed to start pika-drivers error dialog");
     }
