@@ -1,6 +1,10 @@
 #! /bin/bash
 UBUNTU_DRIVERS="$(ubuntu-drivers list | grep -vi -server)"
-AMDGPU_DRIVERS="explosives"
+
+if inxi -G | grep " loaded" | grep "amdgpu" &> /dev/null
+then
+	AMDGPU_DRIVERS="explosives"
+fi
 DRIVERS="$(printf "$UBUNTU_DRIVERS\n$AMDGPU_DRIVERS")"
 if [[ -z $DRIVERS ]]
 then
