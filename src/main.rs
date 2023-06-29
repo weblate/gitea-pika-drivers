@@ -33,8 +33,8 @@ fn build_ui(app: &Application) {
     main_box.append(&drivers_list_row);
 
     println!("Checking HW paramter script for available drivers:\n");
-    let ubuntu_drivers_list_cli = Command::new("/usr/bin/echo")
-                         .arg("nvidia-driver-680\ntest2\ntest3\ntest4")
+    let ubuntu_drivers_list_cli = Command::new("bash")
+                         .arg("-c", "/usr/lib/pika/drivers/generate_driver_definitions.sh")
                          .output()
                          .expect("failed to execute process");
     
@@ -60,7 +60,7 @@ fn build_ui(app: &Application) {
                 .margin_end(12)
                 .build();
         
-        if driver_name != "test1" {
+        if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
                 driver_label.set_label(driver)
         } else {
                 driver_label.set_label("No Driver are required for this system you are good to go! 😎")
@@ -85,7 +85,7 @@ fn build_ui(app: &Application) {
         
         driver_box.append(&driver_label);
         driver_box.append(&driver_separator);
-        if driver_name != "test1" {
+        if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
             driver_box.append(&driver_button);
         }
         drivers_list_row.append(&driver_box);
@@ -118,7 +118,7 @@ fn build_ui(app: &Application) {
 fn modify_package(package: &str, driver_button: &Button) {
     println!("Start installing driver {}: ", package);
     let wrapper_command = Command::new("x-terminal-emulator")
-            .args(["-e", "bash", "-c", "apt install jaj"])
+            .args(["-e", "bash", "-c", "/usr/lib/pika/drivers/modify-driver.sh", package])
             .output()
             .unwrap();
     if wrapper_command.status.success() {
@@ -132,8 +132,8 @@ fn modify_package(package: &str, driver_button: &Button) {
         println!("Refreshing GUI Labels.\n");
         driver_button_refresh(package, driver_button);
         println!("Sending error message.\n");
-        let _error_command = Command::new("zenity")
-            .args(["--error", "--text", "There was an error instaling", package])
+        let _error_command = Command::new("bash")
+            .arg("-c", "/usr/lib/pika/drivers/dialog-error.sh", package)
             .spawn()
             .expect("Failed to start pika-drivers error dialog");
     }
