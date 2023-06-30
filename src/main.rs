@@ -45,7 +45,6 @@ fn build_ui(app: &Application) {
         let driver_name = driver;
     
         let driver_string = driver.to_string();
-        let driver_string2 = driver.to_string();
     
         let driver_box = gtk::Box::builder()
             .orientation(Orientation::Horizontal)
@@ -65,7 +64,20 @@ fn build_ui(app: &Application) {
                 driver_label.set_label("No Drivers are required for this system you are good to go! 😎")
         }
         
-        
+        let  command_version_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+            .args(["version", driver.clone()])
+            .output()
+            .unwrap();
+            
+        let  command_description_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+            .args(["description", driver.clone()])
+            .output()
+            .unwrap();
+            
+        let  command_device_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+            .args(["device", driver.clone()])
+            .output()
+            .unwrap();
 
         
         let driver_button = gtk::Button::builder()
@@ -75,15 +87,43 @@ fn build_ui(app: &Application) {
             .margin_end(12)
             .build();
 
-        let driver_middle_part = gtk::Box::builder()
+        let driver_middle_part_box = gtk::Box::builder()
             .orientation(Orientation::Vertical)
             .hexpand(true)
             .build();
+            
+
+        let driver_separator_1 = gtk::Separator::builder()
+            .orientation(Orientation::Vertical)
+            .build();
         
-        driver_button_refresh(&driver_string2, &driver_button);
+        let driver_separator_2 = gtk::Separator::builder()
+            .orientation(Orientation::Vertical)
+            .build();
+            
+        let driver_middle_part_version_label = gtk::Label::builder()
+            .build();
+            
+        let driver_middle_part_description_label = gtk::Label::builder()
+            .build();
+            
+        let driver_middle_part_device_label = gtk::Label::builder()
+            .build();
+            
+        driver_middle_part_version_label.set_text(&String::from_utf8(command_version_label.stdout).unwrap());
+        driver_middle_part_description_label.set_text(&String::from_utf8(command_description_label.stdout).unwrap());
+        driver_middle_part_device_label.set_text(&String::from_utf8(command_device_label.stdout).unwrap());
+        
+        driver_button_refresh(&driver_string.clone(), &driver_button);
+        
+        driver_middle_part_box.append(&driver_middle_part_description_label);
+        driver_middle_part_box.append(&driver_middle_part_version_label);
+        driver_middle_part_box.append(&driver_middle_part_device_label);
         
         driver_box.append(&driver_label);
-        driver_box.append(&driver_middle_part);
+        driver_box.append(&driver_separator_1);
+        driver_box.append(&driver_middle_part_box);
+        driver_box.append(&driver_separator_2);
         if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
             driver_box.append(&driver_button);
         }
