@@ -65,7 +65,7 @@ fn build_ui(app: &Application) {
         
         let driver_start_part_box = gtk::Box::builder()
             .orientation(Orientation::Horizontal)
-            .width_request(300)
+            .width_request(400)
             .build();
         
         let driver_icon_label_box = gtk::Box::builder()
@@ -74,18 +74,19 @@ fn build_ui(app: &Application) {
         
         let driver_label = gtk::Label::builder()
                 .margin_top(12)
-                .margin_bottom(12)
                 .margin_start(12)
                 .margin_end(12)
                 .halign(Align::Start)
                 .build();
+        driver_label.add_css_class("startLabel");
+
                 
         let driver_icon = gtk::Image::builder()
                 .margin_top(12)
                 .margin_bottom(12)
                 .margin_start(12)
                 .margin_end(12)
-                .pixel_size(48)
+                .pixel_size(64)
                 .halign(Align::Start)
                 .build();
         
@@ -131,11 +132,8 @@ fn build_ui(app: &Application) {
             .unwrap();
 
         
-        let driver_button = gtk::Button::builder()
-            .margin_top(12)
-            .margin_bottom(12)
-            .margin_start(12)
-            .margin_end(12)
+        let driver_button_icon = gtk::Image::builder()
+            .pixel_size(24)
             .build();
             
         let driver_end_part_box = gtk::Box::builder()
@@ -151,11 +149,10 @@ fn build_ui(app: &Application) {
             .build();
 
         let driver_version_icon = gtk::Image::builder()
-            .margin_top(12)
             .margin_bottom(12)
             .margin_start(12)
             .margin_end(12)
-            .icon_name("dialog-question")
+            .icon_name("dialog-question-symbolic")
             .halign(Align::Start)
             .build();
 
@@ -178,12 +175,20 @@ fn build_ui(app: &Application) {
         driver_device_icon.set_tooltip_text(Some(&String::from_utf8(command_device_label.stdout).unwrap()));
         driver_middle_part_description_label.set_text(&String::from_utf8(command_description_label.stdout).unwrap());
         
-        driver_button_refresh(&driver_string.clone(), &driver_button);
+        driver_button_refresh(&driver_string.clone(), &driver_button_icon);
         
         driver_middle_part_box.append(&driver_middle_part_description_label);
         driver_middle_part_box.append(&driver_device_icon);
         
         
+        
+        let driver_button = gtk::Button::builder()
+            .margin_top(12)
+            .margin_bottom(12)
+            .margin_start(12)
+            .margin_end(12)
+            .child(&driver_button_icon)
+            .build();
         
         let driver_start_sep = gtk::Separator::builder()
             .build();
@@ -205,7 +210,7 @@ fn build_ui(app: &Application) {
         }
         drivers_list_row.append(&driver_box);
         
-        driver_button.connect_clicked(clone!(@weak driver_button => move |_| modify_package(&driver_string, &driver_button)));
+        driver_button.connect_clicked(clone!(@weak driver_button => move |_| modify_package(&driver_string, &driver_button_icon)));
     
     }
 
@@ -247,7 +252,7 @@ fn build_ui(app: &Application) {
 }
 
     
-fn modify_package(package: &str, driver_button: &Button) {
+fn modify_package(package: &str, driver_button: &Image) {
     let str_pkg = package.to_string();
     println!("Start installing driver {}: ", package);
     let wrapper_command = Command::new("x-terminal-emulator")
@@ -280,7 +285,7 @@ fn modify_package(package: &str, driver_button: &Button) {
     }
 }
 
-fn driver_button_refresh(driver: &str, driver_button: &Button) {
+fn driver_button_refresh(driver: &str, driver_button: &Image) {
     let  driver_command = Command::new("dpkg")
         .args(["-s", driver])
         .output()
@@ -292,7 +297,7 @@ fn driver_button_refresh(driver: &str, driver_button: &Button) {
             } else {
                 driver_button.set_tooltip_text(Some("Uninstall."));
             }
-                driver_button.set_icon_name("user-trash-symbolic");
+                driver_button.set_icon_name(Some("user-trash-symbolic"));
     } else {
             println!("Checking Driver Presence of {}: Failure! Driver isn't installed", driver);
             if driver.contains("nvidia") {
@@ -300,6 +305,6 @@ fn driver_button_refresh(driver: &str, driver_button: &Button) {
             } else {
                 driver_button.set_tooltip_text(Some("Install."));
             }
-            driver_button.set_icon_name("go-down-symbolic");
+            driver_button.set_icon_name(Some("go-down-symbolic"))
     }
 }
