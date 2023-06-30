@@ -3,13 +3,14 @@ all:
 
 install:
 	mkdir -p $(DESTDIR)/usr/bin/
+	mkdir -p $(DESTDIR)/usr/lib/pika/drivers/
+	cp data/*.css $(DESTDIR)/usr/lib/pika/drivers/
 	cargo fetch
 	cargo build --release
 	cp -vf target/release/pika-drivers $(DESTDIR)/usr/bin/
 	chmod 755 $(DESTDIR)/usr/bin/pika-drivers
 	mkdir -p $(DESTDIR)/usr/lib/pika/drivers/
 	cp data/*.sh $(DESTDIR)/usr/lib/pika/drivers/
-	cp data/*.css $(DESTDIR)/usr/lib/pika/drivers/
 	chmod 755 $(DESTDIR)/usr/lib/pika/drivers/*.sh
 	mkdir -p $(DESTDIR)/usr/share/applications
 	mkdir -p $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
