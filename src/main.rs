@@ -51,17 +51,54 @@ fn build_ui(app: &Application) {
             .build();
     
         
+        
+        let driver_start_part_box = gtk::Box::builder()
+            .orientation(Orientation::Horizontal)
+            .build();
+        
+        let driver_icon_label_box = gtk::Box::builder()
+            .orientation(Orientation::Vertical)
+            .build();
+        
         let driver_label = gtk::Label::builder()
                 .margin_top(12)
                 .margin_bottom(12)
                 .margin_start(12)
                 .margin_end(12)
                 .build();
+                
+        let driver_icon = gtk::Image::builder()
+                .margin_top(12)
+                .margin_bottom(12)
+                .margin_start(12)
+                .margin_end(12)
+                .pixel_size(48)
+                .build();
         
         if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
-                driver_label.set_label(driver)
+                driver_label.set_label(driver);
+                if driver_name == "pika-rocm-meta" {
+                    driver_icon.set_from_icon_name(Some("amd"));
+                } else if driver_name == "vulkan-amdgpu-pro" {
+                    driver_icon.set_from_icon_name(Some("amd"));
+                } else if driver_name == "amf-amdgpu-pro" {
+                    driver_icon.set_from_icon_name(Some("amd"));
+                } else if driver_name == "amdvlk" {
+                    driver_icon.set_from_icon_name(Some("amd"));
+                } else if driver_name == "opencl-legacy-amdgpu-pro-icd" {
+                    driver_icon.set_from_icon_name(Some("amd"));
+                } else if driver_name == "amdgpu-pro-oglp" {
+                    driver_icon.set_from_icon_name(Some("amd"));
+                } else if driver_name == "xone-dkms" {
+                    driver_icon.set_from_icon_name(Some("input-gaming"));
+                } else if driver_name.contains("nvidia") {
+                    driver_icon.set_from_icon_name(Some("nvidia"));
+                } else {
+                    driver_icon.set_from_icon_name(Some("pika-drivers"));
+                }
         } else {
-                driver_label.set_label("No Drivers are required for this system you are good to go! 😎")
+                driver_label.set_label("No Drivers are required for this system you are good to go! 😎");
+                driver_icon.hide()
         }
         
         let  command_version_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
@@ -93,18 +130,15 @@ fn build_ui(app: &Application) {
             .build();
             
         let driver_middle_part_version_label = gtk::Label::builder()
-            .justify(Justification::Center)
             .wrap(true)
             .build();
             
         let driver_middle_part_description_label = gtk::Label::builder()
-            .justify(Justification::Center)
             .margin_top(10)
             .wrap(true)
             .build();
             
         let driver_middle_part_device_label = gtk::Label::builder()
-            .justify(Justification::Center)
             .wrap(true)
             .build();
             
@@ -115,10 +149,14 @@ fn build_ui(app: &Application) {
         driver_button_refresh(&driver_string.clone(), &driver_button);
         
         driver_middle_part_box.append(&driver_middle_part_description_label);
-        driver_middle_part_box.append(&driver_middle_part_version_label);
         driver_middle_part_box.append(&driver_middle_part_device_label);
         
-        driver_box.append(&driver_label);
+        
+        driver_icon_label_box.append(&driver_label);
+        driver_icon_label_box.append(&driver_middle_part_version_label);
+        driver_start_part_box.append(&driver_icon);
+        driver_start_part_box.append(&driver_icon_label_box);
+        driver_box.append(&driver_start_part_box);
         driver_box.append(&driver_middle_part_box);
         if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
             driver_box.append(&driver_button);
