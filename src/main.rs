@@ -261,7 +261,7 @@ fn build_ui(app: &Application) {
         .build();
         
     let credits_label = gtk::Label::builder()
-        .label("Pika Drivers")
+        .label("Pika Drivers\nMade by: Cosmo")
         .margin_top(12)
         .margin_bottom(12)
         .margin_start(12)
@@ -273,14 +273,16 @@ fn build_ui(app: &Application) {
         .margin_bottom(12)
         .margin_start(12)
         .margin_end(12)
-        .label_align(Align::Center)
         .build();
+        
+    credits_frame.set_label_align(0.5);
         
     credits_frame.set_label(Some(PROJECT_VERSION));
         
     let credits_window = gtk::Window::builder()
         .child(&credits_window_box)
         .transient_for(&window)
+        .resizable(false)
         .build();
         
     credits_window_box.append(&credits_icon);
