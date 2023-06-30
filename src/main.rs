@@ -3,6 +3,10 @@ use gtk::prelude::*;
 use gtk::*;
 use glib::*;
 use gdk::Display;
+
+
+const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 fn main() {
     let application = Application::new(Some("com.pika.drivers"), Default::default());
     application.connect_startup(|app| {
@@ -229,6 +233,8 @@ fn build_ui(app: &Application) {
     
     window_box.append(&main_scroll);
     
+    
+
     let window = gtk::ApplicationWindow::builder()
         .title("PikaOS Driver Manager")
         .application(app)
@@ -240,9 +246,52 @@ fn build_ui(app: &Application) {
         .height_request(500)
         .startup_id("pika-drivers")
         .build();
+        
+        
+    let credits_window_box =  gtk::Box::builder()
+        .orientation(Orientation::Vertical)
+        .build();
+    let credits_icon = gtk::Image::builder()
+        .icon_name("pika-drivers")
+        .margin_top(12)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .pixel_size(128)
+        .build();
+        
+    let credits_label = gtk::Label::builder()
+        .label("Pika Drivers")
+        .margin_top(12)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .build();
+        
+    let credits_frame = gtk::Frame::builder()
+        .margin_top(8)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .label_align(Align::Center)
+        .build();
+        
+    credits_frame.set_label(Some(PROJECT_VERSION));
+        
+    let credits_window = gtk::Window::builder()
+        .child(&credits_window_box)
+        .transient_for(&window)
+        .build();
+        
+    credits_window_box.append(&credits_icon);
+    credits_window_box.append(&credits_label);
+    credits_window_box.append(&credits_frame);
+        
     window.set_titlebar(Some(&window_title_bar));
     
     window_title_bar.pack_end(&credits_button);
+    
+    credits_button.connect_clicked(clone!(@weak credits_button => move |_| credits_window.show()));
         
     window.show()
 }
