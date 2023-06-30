@@ -3,8 +3,6 @@ all:
 
 install:
 	mkdir -p $(DESTDIR)/usr/bin/
-	mkdir -p $(DESTDIR)/usr/lib/pika/drivers/
-	cp data/*.css $(DESTDIR)/usr/lib/pika/drivers/
 	cargo fetch
 	cargo build --release
 	cp -vf target/release/pika-drivers $(DESTDIR)/usr/bin/
