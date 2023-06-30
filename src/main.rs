@@ -117,7 +117,7 @@ fn build_ui(app: &Application) {
 fn modify_package(package: &str, driver_button: &Button) {
     println!("Start installing driver {}: ", package);
     let wrapper_command = Command::new("x-terminal-emulator")
-            .args(["-e", "bash", "-c", "/usr/lib/pika/drivers/modify-driver.sh", package])
+            .args(["-e", "bash", "-c", "/usr/lib/pika/drivers/modify-driver.sh {}", package])
             .output()
             .unwrap();
     if wrapper_command.status.success() {
@@ -132,7 +132,7 @@ fn modify_package(package: &str, driver_button: &Button) {
         driver_button_refresh(package, driver_button);
         println!("Sending error message.\n");
         let _error_command = Command::new("bash")
-            .args(["-c", "/usr/lib/pika/drivers/dialog-error.sh", package])
+            .args(["-c", "/usr/lib/pika/drivers/dialog-error.sh {}", package])
             .output()
             .unwrap();
     }
