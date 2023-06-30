@@ -124,36 +124,49 @@ fn build_ui(app: &Application) {
             .margin_end(12)
             .build();
 
+        let driver_device_icon = gtk::Image::builder()
+            .margin_top(12)
+            .margin_bottom(12)
+            .margin_start(12)
+            .margin_end(12)
+            .icon_name("edit-select-all-symbolic")
+            .build();
+
+        let driver_version_icon = gtk::Image::builder()
+            .margin_top(12)
+            .margin_bottom(12)
+            .margin_start(12)
+            .margin_end(12)
+            .icon_name("dialog-question")
+            .build();
+
         let driver_middle_part_box = gtk::Box::builder()
-            .orientation(Orientation::Vertical)
+            .orientation(Orientation::Horizontal)
             .hexpand(true)
             .build();
             
-        let driver_middle_part_version_label = gtk::Label::builder()
-            .wrap(true)
-            .build();
-            
         let driver_middle_part_description_label = gtk::Label::builder()
-            .margin_top(10)
+            .margin_top(12)
+            .margin_bottom(12)
+            .margin_start(12)
+            .margin_end(12)
+            .hexpand(true)
+            .justify(Justification::Center)
             .wrap(true)
             .build();
             
-        let driver_middle_part_device_label = gtk::Label::builder()
-            .wrap(true)
-            .build();
-            
-        driver_middle_part_version_label.set_text(&String::from_utf8(command_version_label.stdout).unwrap());
+        driver_version_icon.set_tooltip_text(Some(&String::from_utf8(command_version_label.stdout).unwrap()));
+        driver_device_icon.set_tooltip_text(Some(&String::from_utf8(command_device_label.stdout).unwrap()));
         driver_middle_part_description_label.set_text(&String::from_utf8(command_description_label.stdout).unwrap());
-        driver_middle_part_device_label.set_text(&String::from_utf8(command_device_label.stdout).unwrap());
         
         driver_button_refresh(&driver_string.clone(), &driver_button);
         
         driver_middle_part_box.append(&driver_middle_part_description_label);
-        driver_middle_part_box.append(&driver_middle_part_device_label);
+        driver_middle_part_box.append(&driver_device_icon);
         
         
         driver_icon_label_box.append(&driver_label);
-        driver_icon_label_box.append(&driver_middle_part_version_label);
+        driver_icon_label_box.append(&driver_version_icon);
         driver_start_part_box.append(&driver_icon);
         driver_start_part_box.append(&driver_icon_label_box);
         driver_box.append(&driver_start_part_box);
