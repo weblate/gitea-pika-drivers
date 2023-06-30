@@ -159,7 +159,7 @@ fn build_ui(app: &Application) {
             .margin_start(12)
             .margin_end(12)
             .hexpand(true)
-            .halign(Align::Center)
+            .justify(Justification::Center)
             .wrap(true)
             .build();
             
