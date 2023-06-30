@@ -8,7 +8,7 @@ fn main() {
     application.connect_startup(|app| {
         // The CSS "magic" happens here.
         let provider = CssProvider::new();
-        provider.load_from_data(include_str!("style.css"));
+        provider.load_from_data(include_str!("/usr/lib/pika/drivers/style.css"));
         // We give the CssProvided to the default screen so the CSS rules we added
         // can be applied to our window.
         gtk::style_context_add_provider_for_display(
@@ -182,6 +182,7 @@ fn build_ui(app: &Application) {
             .margin_bottom(12)
             .margin_start(12)
             .margin_end(12)
+            .has_frame(false)
             .child(&driver_button_icon)
             .build();
         

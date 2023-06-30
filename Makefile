@@ -9,6 +9,7 @@ install:
 	chmod 755 $(DESTDIR)/usr/bin/pika-drivers
 	mkdir -p $(DESTDIR)/usr/lib/pika/drivers/
 	cp data/*.sh $(DESTDIR)/usr/lib/pika/drivers/
+	cp data/*.css $(DESTDIR)/usr/lib/pika/drivers/
 	chmod 755 $(DESTDIR)/usr/lib/pika/drivers/*.sh
 	mkdir -p $(DESTDIR)/usr/share/applications
 	mkdir -p $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
