@@ -2,11 +2,11 @@
 
 if [[ $1 == "version" ]]
 then
-	apt-cache show $2 | grep Version:
+	apt-cache show $2 | grep Version: | cut -d":" -f2 | head -n1
 else
 	if [[ $1 == "description" ]]
 	then
-		apt-cache show $2 | grep "Description*" | head -n1
+		apt-cache show $2 | grep 'Description*' | cut -d":" -f2 | head -n1
 	else
 		if [[ $1 == "device" ]]
 		then
