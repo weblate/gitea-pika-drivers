@@ -123,6 +123,10 @@ fn build_ui(app: &Application) {
             .margin_start(12)
             .margin_end(12)
             .build();
+            
+        let driver_end_part_box = gtk::Box::builder()
+            .orientation(Orientation::Horizontal)
+            .build();
 
         let driver_device_icon = gtk::Image::builder()
             .margin_top(12)
@@ -138,6 +142,7 @@ fn build_ui(app: &Application) {
             .margin_start(12)
             .margin_end(12)
             .icon_name("dialog-question")
+            .halign(Align::Start)
             .build();
 
         let driver_middle_part_box = gtk::Box::builder()
@@ -151,7 +156,7 @@ fn build_ui(app: &Application) {
             .margin_start(12)
             .margin_end(12)
             .hexpand(true)
-            .justify(Justification::Center)
+            .halign(Align::Center)
             .wrap(true)
             .build();
             
@@ -165,14 +170,17 @@ fn build_ui(app: &Application) {
         driver_middle_part_box.append(&driver_device_icon);
         
         
+        
+        
         driver_icon_label_box.append(&driver_label);
         driver_icon_label_box.append(&driver_version_icon);
         driver_start_part_box.append(&driver_icon);
         driver_start_part_box.append(&driver_icon_label_box);
         driver_box.append(&driver_start_part_box);
         driver_box.append(&driver_middle_part_box);
+        driver_box.append(&driver_end_part_box);
         if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
-            driver_box.append(&driver_button);
+            driver_end_part_box.append(&driver_button);
         }
         drivers_list_row.append(&driver_box);
         
@@ -197,7 +205,6 @@ fn build_ui(app: &Application) {
         .icon_name("dialog-information-symbolic")
         .build();
     
-    window_box.append(&window_title_bar);
     window_box.append(&main_scroll);
     
     let window = gtk::ApplicationWindow::builder()
@@ -209,7 +216,6 @@ fn build_ui(app: &Application) {
         .default_height(600)
         .width_request(500)
         .height_request(500)
-        .decorated(false)
         .startup_id("pika-drivers")
         .build();
     window.set_titlebar(Some(&window_title_bar));
