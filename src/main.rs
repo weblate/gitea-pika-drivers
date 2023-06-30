@@ -54,6 +54,7 @@ fn build_ui(app: &Application) {
         
         let driver_start_part_box = gtk::Box::builder()
             .orientation(Orientation::Horizontal)
+            .width_request(300)
             .build();
         
         let driver_icon_label_box = gtk::Box::builder()
@@ -65,6 +66,7 @@ fn build_ui(app: &Application) {
                 .margin_bottom(12)
                 .margin_start(12)
                 .margin_end(12)
+                .halign(Align::Start)
                 .build();
                 
         let driver_icon = gtk::Image::builder()
@@ -73,6 +75,7 @@ fn build_ui(app: &Application) {
                 .margin_start(12)
                 .margin_end(12)
                 .pixel_size(48)
+                .halign(Align::Start)
                 .build();
         
         if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
@@ -171,13 +174,20 @@ fn build_ui(app: &Application) {
         
         
         
-        
+        let driver_start_sep = gtk::Separator::builder()
+            .build();
+            
+        let driver_end_sep = gtk::Separator::builder()
+            .build();
+            
         driver_icon_label_box.append(&driver_label);
         driver_icon_label_box.append(&driver_version_icon);
         driver_start_part_box.append(&driver_icon);
         driver_start_part_box.append(&driver_icon_label_box);
         driver_box.append(&driver_start_part_box);
+        driver_box.append(&driver_start_sep);
         driver_box.append(&driver_middle_part_box);
+        driver_box.append(&driver_end_sep);
         driver_box.append(&driver_end_part_box);
         if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
             driver_end_part_box.append(&driver_button);
