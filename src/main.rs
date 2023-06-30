@@ -2,14 +2,25 @@ use std::process::Command;
 use gtk::prelude::*;
 use gtk::*;
 use glib::*;
-
+use gdk::Display;
 fn main() {
-    let app = Application::builder()
-        .application_id("com.pika.drivers")
-        .build();
-        
-    app.connect_activate(build_ui);
-    app.run();
+    let application = Application::new(Some("com.pika.drivers"), Default::default());
+    application.connect_startup(|app| {
+        // The CSS "magic" happens here.
+        let provider = CssProvider::new();
+        provider.load_from_data(include_str!("style.css"));
+        // We give the CssProvided to the default screen so the CSS rules we added
+        // can be applied to our window.
+        gtk::style_context_add_provider_for_display(
+            &Display::default().expect("Could not connect to a display."),
+            &provider,
+            STYLE_PROVIDER_PRIORITY_APPLICATION,
+        );
+
+        app.connect_activate(build_ui);
+    });
+    
+    application.run();
 }
 
 
@@ -159,10 +170,10 @@ fn build_ui(app: &Application) {
             .margin_start(12)
             .margin_end(12)
             .hexpand(true)
-            .justify(Justification::Center)
+            .justify(Justification::Left)
             .wrap(true)
             .build();
-            
+        driver_middle_part_description_label.add_css_class("midLabel");
         driver_version_icon.set_tooltip_text(Some(&String::from_utf8(command_version_label.stdout).unwrap()));
         driver_device_icon.set_tooltip_text(Some(&String::from_utf8(command_device_label.stdout).unwrap()));
         driver_middle_part_description_label.set_text(&String::from_utf8(command_description_label.stdout).unwrap());
