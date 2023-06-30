@@ -12,7 +12,7 @@ else
 		then
 			if echo "$2" | grep -i -E 'pika-rocm-meta|vulkan-amdgpu-pro|amf-amdgpu-pro|amdvlk|opencl-legacy-amdgpu-pro-icd|amdgpu-pro-oglp' &> /dev/null
 			then
-				echo "Device: $(inxi -G | grep -i device | grep -i AMD)"
+				echo "Device: $(lspci | grep -i -E 'vga|display|3d' | cut -d":" -f3 | grep -i AMD)"
 			else
 				if echo "$2" | grep -i -E 'xone' &> /dev/null
 				then
