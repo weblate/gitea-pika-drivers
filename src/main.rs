@@ -99,6 +99,7 @@ fn build_ui(app: &Application) {
             
         let driver_middle_part_description_label = gtk::Label::builder()
             .justify(Justification::Center)
+            .margin_top(10)
             .wrap(true)
             .build();
             
@@ -129,21 +130,40 @@ fn build_ui(app: &Application) {
     }
 
         
+    let window_box  =  gtk::Box::builder()
+        .orientation(Orientation::Vertical)
+        .build();
+    
     let main_scroll =  gtk::ScrolledWindow::builder()
         .child(&main_box)
         .build();
+        
+    let window_title_bar = gtk::HeaderBar::builder()
+        .show_title_buttons(true)
+        .build();
+        
+    let credits_button = gtk::Button::builder()
+        .icon_name("dialog-information-symbolic")
+        .build();
+    
+    window_box.append(&window_title_bar);
+    window_box.append(&main_scroll);
+    
     let window = gtk::ApplicationWindow::builder()
         .title("PikaOS Driver Manager")
         .application(app)
-        .child(&main_scroll)
+        .child(&window_box)
         .icon_name("mintinstall")
         .default_width(1200)
         .default_height(600)
         .width_request(500)
         .height_request(500)
+        .decorated(false)
         .startup_id("pika-drivers")
         .build();
-        
+    window.set_titlebar(Some(&window_title_bar));
+    
+    window_title_bar.pack_end(&credits_button);
         
     window.show()
 }
