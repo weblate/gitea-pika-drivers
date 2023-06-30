@@ -65,7 +65,7 @@ fn build_ui(app: &Application) {
         
         let driver_start_part_box = gtk::Box::builder()
             .orientation(Orientation::Horizontal)
-            .width_request(400)
+            .width_request(350)
             .build();
         
         let driver_icon_label_box = gtk::Box::builder()
@@ -74,9 +74,6 @@ fn build_ui(app: &Application) {
         
         let driver_label = gtk::Label::builder()
                 .margin_top(12)
-                .margin_start(12)
-                .margin_end(12)
-                .halign(Align::Start)
                 .build();
         driver_label.add_css_class("startLabel");
 
@@ -150,8 +147,6 @@ fn build_ui(app: &Application) {
 
         let driver_version_icon = gtk::Image::builder()
             .margin_bottom(12)
-            .margin_start(12)
-            .margin_end(12)
             .icon_name("dialog-question-symbolic")
             .halign(Align::Start)
             .build();
