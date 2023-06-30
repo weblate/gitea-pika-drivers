@@ -62,7 +62,7 @@ fn build_ui(app: &Application) {
         if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
                 driver_label.set_label(driver)
         } else {
-                driver_label.set_label("No Driver are required for this system you are good to go! 😎")
+                driver_label.set_label("No Drivers are required for this system you are good to go! 😎")
         }
         
         
@@ -75,15 +75,15 @@ fn build_ui(app: &Application) {
             .margin_end(12)
             .build();
 
-        let driver_separator = gtk::Separator::builder()
+        let driver_middle_part = gtk::Box::builder()
+            .orientation(Orientation::Vertical)
             .hexpand(true)
-            .opacity(0.0)
             .build();
         
         driver_button_refresh(&driver_string2, &driver_button);
         
         driver_box.append(&driver_label);
-        driver_box.append(&driver_separator);
+        driver_box.append(&driver_middle_part);
         if driver_name != "emScuM8rsa6kuhMePtR5bT8s4z9s" {
             driver_box.append(&driver_button);
         }
@@ -155,17 +155,17 @@ fn driver_button_refresh(driver: &str, driver_button: &Button) {
     if driver_command.status.success() {
             println!("Checking Driver Presence of {}: Success!", driver);
             if driver.contains("nvidia") {
-                driver_button.set_tooltip_text(Some("This uninstall and revert to nouveau"));
+                driver_button.set_tooltip_text(Some("Uninstall and revert to nouveau."));
             } else {
-                driver_button.set_tooltip_text(Some("This uninstall the driver"));
+                driver_button.set_tooltip_text(Some("Uninstall."));
             }
                 driver_button.set_icon_name("user-trash-symbolic");
     } else {
             println!("Checking Driver Presence of {}: Failure! Driver isn't installed", driver);
             if driver.contains("nvidia") {
-                driver_button.set_tooltip_text(Some("This will remove nouveau and install"));
+                driver_button.set_tooltip_text(Some("Install and override nouveau."));
             } else {
-                driver_button.set_tooltip_text(Some("Install"));
+                driver_button.set_tooltip_text(Some("Install."));
             }
             driver_button.set_icon_name("go-down-symbolic");
     }
