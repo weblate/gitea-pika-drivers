@@ -1,8 +1,10 @@
 use std::process::Command;
+use std::thread;
 use gtk::prelude::*;
 use gtk::*;
 use glib::*;
 use gdk::Display;
+use std::sync::mpsc::channel;
 
 
 const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -31,6 +33,177 @@ fn main() {
 fn build_ui(app: &Application) {
 
 
+    gtk::glib::set_prgname(Some("Pika Drivers"));
+    glib::set_application_name("Pika Drivers");
+    
+    let loading_box = gtk::Box::builder()
+        .margin_top(20)
+        .margin_bottom(20)
+        .margin_start(20)
+        .margin_end(20)
+        .vexpand(true)
+        .hexpand(true)
+        .build();
+    
+    let window = gtk::ApplicationWindow::builder()
+        .title("PikaOS Driver Manager")
+        .application(app)
+        .child(&loading_box)
+        .icon_name("mintinstall")
+        .default_width(1200)
+        .default_height(600)
+        .width_request(700)
+        .height_request(500)
+        .startup_id("pika-drivers")
+        .build();
+        
+        
+    let credits_window_box =  gtk::Box::builder()
+        .orientation(Orientation::Vertical)
+        .build();
+    let credits_icon = gtk::Image::builder()
+        .icon_name("pika-drivers")
+        .margin_top(12)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .pixel_size(128)
+        .build();
+        
+    let credits_label = gtk::Label::builder()
+        .label("Pika Drivers\nMade by: Cosmo")
+        .margin_top(12)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .build();
+        
+    let credits_frame = gtk::Frame::builder()
+        .margin_top(8)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .build();
+        
+    let window_title_bar = gtk::HeaderBar::builder()
+        .show_title_buttons(true)
+        .build();
+        
+    let credits_button = gtk::Button::builder()
+        .icon_name("dialog-information-symbolic")
+        .build();
+        
+    credits_frame.set_label_align(0.5);
+        
+    credits_frame.set_label(Some(PROJECT_VERSION));
+        
+    let credits_window = gtk::Window::builder()
+        .child(&credits_window_box)
+        .transient_for(&window)
+        .resizable(false)
+        .hide_on_close(true)
+        .build();
+        
+    credits_window_box.append(&credits_icon);
+    credits_window_box.append(&credits_label);
+    credits_window_box.append(&credits_frame);
+        
+    window.set_titlebar(Some(&window_title_bar));
+    
+    window_title_bar.pack_end(&credits_button.clone());
+    
+    credits_button.connect_clicked(clone!(@weak credits_button => move |_| credits_window.show()));
+    
+    let (sender, receiver) = MainContext::channel(Priority::default());
+    window.connect_show(move |_| {
+        let sender = sender.clone();
+        // The long running operation runs now in a separate thread
+        thread::spawn(move || {
+            println!("Checking HW paramter script for available drivers:\n");
+            let ubuntu_drivers_list_cli = Command::new("/usr/lib/pika/drivers/generate_driver_definitions.sh")
+                .output()
+                .expect("failed to execute process");
+    
+            let ubuntu_drivers_list_utf8 = String::from_utf8(ubuntu_drivers_list_cli.stdout).unwrap();
+            
+           sender.send(ubuntu_drivers_list_utf8).expect("Could not send through channel");
+        });
+    });
+        
+    window.show();
+    
+    receiver.attach(
+        None,
+        clone!(@weak window => @default-return Continue(false),
+                    move |sent_output| {
+                        println!("{}", sent_output);
+                        Continue(true)
+                    }
+        ),
+
+    );
+    
+}
+
+    
+fn modify_package(package: &str, driver_button: &Image) {
+    let str_pkg = package.to_string();
+    println!("Start installing driver {}: ", package);
+    let wrapper_command = Command::new("x-terminal-emulator")
+            .arg("-e")
+            .arg("bash")
+            .arg("-c")
+            .arg("/usr/lib/pika/drivers/modify-driver.sh \"$1\"")
+            .arg("bash") // $0
+            .arg(&str_pkg) // $1
+            .output()
+            .unwrap();
+    if wrapper_command.status.success() {
+        println!("Installation Command has ended.\n");
+        println!("Installation was successful!\n");
+        println!("Refreshing GUI Labels.\n");
+        driver_button_refresh(package, driver_button);
+    } else {
+        println!("Installation Command has ended.\n");
+        println!("Installation was failed :(\n");
+        println!("Refreshing GUI Labels.\n");
+        driver_button_refresh(package, driver_button);
+        println!("Sending error message.\n");
+        let _error_command = Command::new("bash")
+            .arg("-c")
+            .arg("/usr/lib/pika/drivers/dialog-error.sh \"$1\"")
+            .arg("bash") // $0
+            .arg(&str_pkg) // $1
+            .output()
+            .unwrap();
+    }
+}
+
+fn driver_button_refresh(driver: &str, driver_button: &Image) {
+    let  driver_command = Command::new("dpkg")
+        .args(["-s", driver])
+        .output()
+        .unwrap();
+    if driver_command.status.success() {
+            println!("Checking Driver Presence of {}: Success!", driver);
+            if driver.contains("nvidia") {
+                driver_button.set_tooltip_text(Some("Uninstall and revert to nouveau."));
+            } else {
+                driver_button.set_tooltip_text(Some("Uninstall."));
+            }
+                driver_button.set_icon_name(Some("user-trash-symbolic"));
+    } else {
+            println!("Checking Driver Presence of {}: Failure! Driver isn't installed", driver);
+            if driver.contains("nvidia") {
+                driver_button.set_tooltip_text(Some("Install and override nouveau."));
+            } else {
+                driver_button.set_tooltip_text(Some("Install."));
+            }
+            driver_button.set_icon_name(Some("go-down-symbolic"))
+    }
+}
+
+fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: &str) {
     let main_box = gtk::Box::builder()
         .orientation(Orientation::Vertical)
         .build();
@@ -47,13 +220,16 @@ fn build_ui(app: &Application) {
         
     main_box.append(&drivers_list_row);
 
-    println!("Checking HW paramter script for available drivers:\n");
-    let ubuntu_drivers_list_cli = Command::new("/usr/lib/pika/drivers/generate_driver_definitions.sh")
-                         .output()
-                         .expect("failed to execute process");
+    let main_scroll =  gtk::ScrolledWindow::builder()
+        .child(&main_box)
+        .build();
     
-    let ubuntu_drivers_list_utf8 = String::from_utf8(ubuntu_drivers_list_cli.stdout).unwrap();
-
+    let window_box  =  gtk::Box::builder()
+        .orientation(Orientation::Vertical)
+        .build();
+    
+    window_box.append(&main_scroll);
+    
     for driver in ubuntu_drivers_list_utf8.lines() {
     
     
@@ -211,148 +387,8 @@ fn build_ui(app: &Application) {
         drivers_list_row.append(&driver_box);
         
         driver_button.connect_clicked(clone!(@weak driver_button => move |_| modify_package(&driver_string, &driver_button_icon)));
+        
+        
     
-    }
-
-        
-    let window_box  =  gtk::Box::builder()
-        .orientation(Orientation::Vertical)
-        .build();
-    
-    let main_scroll =  gtk::ScrolledWindow::builder()
-        .child(&main_box)
-        .build();
-        
-    let window_title_bar = gtk::HeaderBar::builder()
-        .show_title_buttons(true)
-        .build();
-        
-    let credits_button = gtk::Button::builder()
-        .icon_name("dialog-information-symbolic")
-        .build();
-    
-    window_box.append(&main_scroll);
-    
-    
-
-    let window = gtk::ApplicationWindow::builder()
-        .title("PikaOS Driver Manager")
-        .application(app)
-        .child(&window_box)
-        .icon_name("mintinstall")
-        .default_width(1200)
-        .default_height(600)
-        .width_request(700)
-        .height_request(500)
-        .startup_id("pika-drivers")
-        .build();
-        
-        
-    let credits_window_box =  gtk::Box::builder()
-        .orientation(Orientation::Vertical)
-        .build();
-    let credits_icon = gtk::Image::builder()
-        .icon_name("pika-drivers")
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
-        .pixel_size(128)
-        .build();
-        
-    let credits_label = gtk::Label::builder()
-        .label("Pika Drivers\nMade by: Cosmo")
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
-        .build();
-        
-    let credits_frame = gtk::Frame::builder()
-        .margin_top(8)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
-        .build();
-        
-    credits_frame.set_label_align(0.5);
-        
-    credits_frame.set_label(Some(PROJECT_VERSION));
-        
-    let credits_window = gtk::Window::builder()
-        .child(&credits_window_box)
-        .transient_for(&window)
-        .resizable(false)
-        .hide_on_close(true)
-        .build();
-        
-    credits_window_box.append(&credits_icon);
-    credits_window_box.append(&credits_label);
-    credits_window_box.append(&credits_frame);
-        
-    window.set_titlebar(Some(&window_title_bar));
-    
-    window_title_bar.pack_end(&credits_button);
-    
-    credits_button.connect_clicked(clone!(@weak credits_button => move |_| credits_window.show()));
-        
-    window.show()
-}
-
-    
-fn modify_package(package: &str, driver_button: &Image) {
-    let str_pkg = package.to_string();
-    println!("Start installing driver {}: ", package);
-    let wrapper_command = Command::new("x-terminal-emulator")
-            .arg("-e")
-            .arg("bash")
-            .arg("-c")
-            .arg("/usr/lib/pika/drivers/modify-driver.sh \"$1\"")
-            .arg("bash") // $0
-            .arg(&str_pkg) // $1
-            .output()
-            .unwrap();
-    if wrapper_command.status.success() {
-        println!("Installation Command has ended.\n");
-        println!("Installation was successful!\n");
-        println!("Refreshing GUI Labels.\n");
-        driver_button_refresh(package, driver_button);
-    } else {
-        println!("Installation Command has ended.\n");
-        println!("Installation was failed :(\n");
-        println!("Refreshing GUI Labels.\n");
-        driver_button_refresh(package, driver_button);
-        println!("Sending error message.\n");
-        let _error_command = Command::new("bash")
-            .arg("-c")
-            .arg("/usr/lib/pika/drivers/dialog-error.sh \"$1\"")
-            .arg("bash") // $0
-            .arg(&str_pkg) // $1
-            .output()
-            .unwrap();
-    }
-}
-
-fn driver_button_refresh(driver: &str, driver_button: &Image) {
-    let  driver_command = Command::new("dpkg")
-        .args(["-s", driver])
-        .output()
-        .unwrap();
-    if driver_command.status.success() {
-            println!("Checking Driver Presence of {}: Success!", driver);
-            if driver.contains("nvidia") {
-                driver_button.set_tooltip_text(Some("Uninstall and revert to nouveau."));
-            } else {
-                driver_button.set_tooltip_text(Some("Uninstall."));
-            }
-                driver_button.set_icon_name(Some("user-trash-symbolic"));
-    } else {
-            println!("Checking Driver Presence of {}: Failure! Driver isn't installed", driver);
-            if driver.contains("nvidia") {
-                driver_button.set_tooltip_text(Some("Install and override nouveau."));
-            } else {
-                driver_button.set_tooltip_text(Some("Install."));
-            }
-            driver_button.set_icon_name(Some("go-down-symbolic"))
     }
 }
