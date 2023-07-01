@@ -296,11 +296,11 @@ fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: String
         
         let driver_icon_label_box = gtk::Box::builder()
             .orientation(Orientation::Vertical)
+            .vexpand(true)
             .build();
         
         let driver_label = gtk::Label::builder()
-                .vexpand(true)
-                .margin_top(12)
+                .margin_top(35)
                 .build();
         driver_label.add_css_class("startLabel");
 
