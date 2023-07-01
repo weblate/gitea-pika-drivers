@@ -4,7 +4,6 @@ use gtk::prelude::*;
 use gtk::*;
 use glib::*;
 use gdk::Display;
-use std::sync::mpsc::channel;
 
 
 const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -202,6 +201,13 @@ fn modify_package(package: &str, driver_button: &Image) {
         println!("Installation was successful!\n");
         println!("Refreshing GUI Labels.\n");
         driver_button_refresh(package, driver_button);
+        let _success_command = Command::new("bash")
+            .arg("-c")
+            .arg("/usr/lib/pika/drivers/dialog-success.sh \"$1\"")
+            .arg("bash") // $0
+            .arg(&str_pkg) // $1
+            .spawn()
+            .unwrap();
     } else {
         println!("Installation Command has ended.\n");
         println!("Installation was failed :(\n");
@@ -213,7 +219,7 @@ fn modify_package(package: &str, driver_button: &Image) {
             .arg("/usr/lib/pika/drivers/dialog-error.sh \"$1\"")
             .arg("bash") // $0
             .arg(&str_pkg) // $1
-            .output()
+            .spawn()
             .unwrap();
     }
 }
@@ -292,6 +298,7 @@ fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: String
             .build();
         
         let driver_label = gtk::Label::builder()
+                .vexpand(true)
                 .margin_top(12)
                 .build();
         driver_label.add_css_class("startLabel");
@@ -376,11 +383,10 @@ fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: String
             .build();
             
         let driver_middle_part_description_label = gtk::Label::builder()
-            .margin_top(12)
-            .margin_bottom(12)
             .margin_start(12)
             .margin_end(12)
             .hexpand(true)
+            .vexpand(true)
             .halign(Align::Start)
             .justify(Justification::Left)
             .build();
