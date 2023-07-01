@@ -37,6 +37,7 @@ fn build_ui(app: &Application) {
     glib::set_application_name("Pika Drivers");
     
     let loading_box = gtk::Box::builder()
+        .orientation(Orientation::Vertical)
         .margin_top(20)
         .margin_bottom(20)
         .margin_start(20)
@@ -44,6 +45,43 @@ fn build_ui(app: &Application) {
         .vexpand(true)
         .hexpand(true)
         .build();
+        
+        
+    let loading_icon = gtk::Image::builder()
+        .icon_name("pika-drivers")
+        .margin_top(20)
+        .margin_bottom(20)
+        .margin_start(20)
+        .vexpand(true)
+        .hexpand(true)
+        .margin_end(20)
+        .pixel_size(256)
+        .build();
+        
+    let loading_spinner = gtk::Spinner::builder()
+        .margin_top(20)
+        .margin_bottom(20)
+        .margin_start(20)
+        .vexpand(true)
+        .hexpand(true)
+        .margin_end(20)
+        .build();
+        
+    let loading_label = gtk::Label::builder()
+        .label("Scanning for drivers...")
+        .margin_top(20)
+        .margin_bottom(20)
+        .margin_start(20)
+        .vexpand(true)
+        .hexpand(true)
+        .margin_end(20)
+        .build();
+        
+    loading_spinner.start();
+        
+    loading_box.append(&loading_icon);
+    loading_box.append(&loading_spinner);
+    loading_box.append(&loading_label);
     
     let window = gtk::ApplicationWindow::builder()
         .title("PikaOS Driver Manager")
@@ -61,6 +99,7 @@ fn build_ui(app: &Application) {
     let credits_window_box =  gtk::Box::builder()
         .orientation(Orientation::Vertical)
         .build();
+    
     let credits_icon = gtk::Image::builder()
         .icon_name("pika-drivers")
         .margin_top(12)
@@ -136,7 +175,7 @@ fn build_ui(app: &Application) {
         None,
         clone!(@weak window => @default-return Continue(false),
                     move |sent_output| {
-                        println!("{}", sent_output);
+                        get_drivers(&window, sent_output);
                         Continue(true)
                     }
         ),
@@ -203,7 +242,7 @@ fn driver_button_refresh(driver: &str, driver_button: &Image) {
     }
 }
 
-fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: &str) {
+fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: String) {
     let main_box = gtk::Box::builder()
         .orientation(Orientation::Vertical)
         .build();
@@ -387,6 +426,8 @@ fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: &str) 
         drivers_list_row.append(&driver_box);
         
         driver_button.connect_clicked(clone!(@weak driver_button => move |_| modify_package(&driver_string, &driver_button_icon)));
+        
+        main_window.set_child(Some(&window_box));
         
         
     
