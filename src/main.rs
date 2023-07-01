@@ -86,14 +86,13 @@ fn build_ui(app: &Application) {
         .title("PikaOS Driver Manager")
         .application(app)
         .child(&loading_box)
-        .icon_name("mintinstall")
+        .icon_name("pika-drivers")
         .default_width(1200)
         .default_height(600)
         .width_request(700)
         .height_request(500)
         .startup_id("pika-drivers")
         .build();
-        
         
     let credits_window_box =  gtk::Box::builder()
         .orientation(Orientation::Vertical)
@@ -140,6 +139,8 @@ fn build_ui(app: &Application) {
         .transient_for(&window)
         .resizable(false)
         .hide_on_close(true)
+        .icon_name("pika-drivers")
+        .startup_id("pika-drivers")
         .build();
         
     credits_window_box.append(&credits_icon);
