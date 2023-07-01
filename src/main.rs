@@ -9,7 +9,7 @@ use gdk::Display;
 const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
-    let application = Application::new(Some("com.pika.drivers"), Default::default());
+    let application = gtk::Application::new(Some("com.pika.drivers"), Default::default());
     application.connect_startup(|app| {
         // The CSS "magic" happens here.
         let provider = CssProvider::new();
@@ -29,11 +29,12 @@ fn main() {
 }
 
 
-fn build_ui(app: &Application) {
+fn build_ui(app: &gtk::Application) {
 
 
     gtk::glib::set_prgname(Some("Pika Drivers"));
     glib::set_application_name("Pika Drivers");
+    let glib_settings = gio::Settings::new("com.pika.drivers");
     
     let loading_box = gtk::Box::builder()
         .orientation(Orientation::Vertical)
@@ -87,12 +88,19 @@ fn build_ui(app: &Application) {
         .application(app)
         .child(&loading_box)
         .icon_name("pika-drivers")
-        .default_width(1200)
-        .default_height(600)
+        .default_width(glib_settings.int("window-width"))
+        .default_height(glib_settings.int("window-height"))
         .width_request(700)
         .height_request(500)
         .startup_id("pika-drivers")
+        .hide_on_close(true)
         .build();
+        
+    if glib_settings.boolean("is-maximized") == true {
+        window.maximize()
+    }
+        
+    
         
     let credits_window_box =  gtk::Box::builder()
         .orientation(Orientation::Vertical)
@@ -151,7 +159,11 @@ fn build_ui(app: &Application) {
     
     window_title_bar.pack_end(&credits_button.clone());
     
+    window.connect_hide(clone!(@weak window => move |_| save_window_size(&window, &glib_settings)));
+    window.connect_hide(clone!(@weak window => move |_| window.destroy()));
+    
     credits_button.connect_clicked(clone!(@weak credits_button => move |_| credits_window.show()));
+
     
     let (sender, receiver) = MainContext::channel(Priority::default());
     window.connect_show(move |_| {
@@ -300,7 +312,8 @@ fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: String
             .build();
         
         let driver_label = gtk::Label::builder()
-                .margin_top(35)
+                .margin_top(26)
+                .margin_bottom(5)
                 .build();
         driver_label.add_css_class("startLabel");
 
@@ -435,8 +448,15 @@ fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: String
         driver_button.connect_clicked(clone!(@weak driver_button => move |_| modify_package(&driver_string, &driver_button_icon)));
         
         main_window.set_child(Some(&window_box));
-        
-        
     
     }
+}
+    
+fn save_window_size(window: &ApplicationWindow, glib_settings: &gio::Settings) {
+        
+        let size = window.default_size();
+        
+        glib_settings.set_int("window-width", size.0);
+        glib_settings.set_int("window-height", size.1);
+        glib_settings.set_boolean("is-maximized", window.is_maximized());
 }
