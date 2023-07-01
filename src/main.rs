@@ -166,8 +166,8 @@ fn build_ui(app: &Application) {
             .margin_start(12)
             .margin_end(12)
             .hexpand(true)
+            .halign(Align::Start)
             .justify(Justification::Left)
-            .wrap(true)
             .build();
         driver_middle_part_description_label.add_css_class("midLabel");
         driver_version_icon.set_tooltip_text(Some(&String::from_utf8(command_version_label.stdout).unwrap()));
@@ -242,7 +242,7 @@ fn build_ui(app: &Application) {
         .icon_name("mintinstall")
         .default_width(1200)
         .default_height(600)
-        .width_request(500)
+        .width_request(700)
         .height_request(500)
         .startup_id("pika-drivers")
         .build();
@@ -283,6 +283,7 @@ fn build_ui(app: &Application) {
         .child(&credits_window_box)
         .transient_for(&window)
         .resizable(false)
+        .hide_on_close(true)
         .build();
         
     credits_window_box.append(&credits_icon);
