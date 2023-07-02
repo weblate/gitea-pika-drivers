@@ -2,14 +2,17 @@ use std::process::Command;
 use std::thread;
 use gtk::prelude::*;
 use gtk::*;
+use gtk::prelude::*;
 use glib::*;
+use adw::*;
 use gdk::Display;
+use adw::prelude::*;
 
 
 const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
-    let application = gtk::Application::new(Some("com.pika.drivers"), Default::default());
+    let application = adw::Application::new(Some("com.pika.drivers"), Default::default());
     application.connect_startup(|app| {
         // The CSS "magic" happens here.
         let provider = CssProvider::new();
@@ -29,12 +32,18 @@ fn main() {
 }
 
 
-fn build_ui(app: &gtk::Application) {
+fn build_ui(app: &adw::Application) {
 
 
     gtk::glib::set_prgname(Some("Pika Drivers"));
     glib::set_application_name("Pika Drivers");
     let glib_settings = gio::Settings::new("com.pika.drivers");
+    
+    let content_box = gtk::Box::builder()
+        .orientation(Orientation::Vertical)
+        .vexpand(true)
+        .hexpand(true)
+        .build();
     
     let loading_box = gtk::Box::builder()
         .orientation(Orientation::Vertical)
@@ -45,7 +54,6 @@ fn build_ui(app: &gtk::Application) {
         .vexpand(true)
         .hexpand(true)
         .build();
-        
         
     let loading_icon = gtk::Image::builder()
         .icon_name("pika-drivers")
@@ -83,10 +91,10 @@ fn build_ui(app: &gtk::Application) {
     loading_box.append(&loading_spinner);
     loading_box.append(&loading_label);
     
-    let window = gtk::ApplicationWindow::builder()
+    let window = adw::ApplicationWindow::builder()
         .title("PikaOS Driver Manager")
         .application(app)
-        .child(&loading_box)
+        .content(&content_box)
         .icon_name("pika-drivers")
         .default_width(glib_settings.int("window-width"))
         .default_height(glib_settings.int("window-height"))
@@ -142,8 +150,8 @@ fn build_ui(app: &gtk::Application) {
         
     credits_frame.set_label(Some(PROJECT_VERSION));
         
-    let credits_window = gtk::Window::builder()
-        .child(&credits_window_box)
+    let credits_window = adw::Window::builder()
+        .content(&credits_window_box)
         .transient_for(&window)
         .resizable(false)
         .hide_on_close(true)
@@ -151,11 +159,13 @@ fn build_ui(app: &gtk::Application) {
         .startup_id("pika-drivers")
         .build();
         
+    credits_window_box.append(&gtk::HeaderBar::builder().show_title_buttons(true).build());
     credits_window_box.append(&credits_icon);
     credits_window_box.append(&credits_label);
     credits_window_box.append(&credits_frame);
-        
-    window.set_titlebar(Some(&window_title_bar));
+    
+    content_box.append(&window_title_bar);
+    content_box.append(&loading_box);
     
     window_title_bar.pack_end(&credits_button.clone());
     
@@ -185,9 +195,9 @@ fn build_ui(app: &gtk::Application) {
     
     receiver.attach(
         None,
-        clone!(@weak window => @default-return Continue(false),
+        clone!(@weak content_box => @default-return Continue(false),
                     move |sent_output| {
-                        get_drivers(&window, sent_output);
+                        get_drivers(&content_box, &loading_box, sent_output);
                         Continue(true)
                     }
         ),
@@ -197,7 +207,7 @@ fn build_ui(app: &gtk::Application) {
 }
 
     
-fn modify_package(package: &str, driver_button: &Image) {
+fn modify_package(package: &str, driver_button: &gtk::Image) {
     let str_pkg = package.to_string();
     println!("Start installing driver {}: ", package);
     let wrapper_command = Command::new("x-terminal-emulator")
@@ -237,7 +247,7 @@ fn modify_package(package: &str, driver_button: &Image) {
     }
 }
 
-fn driver_button_refresh(driver: &str, driver_button: &Image) {
+fn driver_button_refresh(driver: &str, driver_button: &gtk::Image) {
     let  driver_command = Command::new("dpkg")
         .args(["-s", driver])
         .output()
@@ -261,7 +271,7 @@ fn driver_button_refresh(driver: &str, driver_button: &Image) {
     }
 }
 
-fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: String) {
+fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_list_utf8: String) {
     let main_box = gtk::Box::builder()
         .orientation(Orientation::Vertical)
         .build();
@@ -447,12 +457,13 @@ fn get_drivers(main_window: &ApplicationWindow, ubuntu_drivers_list_utf8: String
         
         driver_button.connect_clicked(clone!(@weak driver_button => move |_| modify_package(&driver_string, &driver_button_icon)));
         
-        main_window.set_child(Some(&window_box));
+        main_window.remove(loading_box);
+        main_window.append(&window_box);
     
     }
 }
     
-fn save_window_size(window: &ApplicationWindow, glib_settings: &gio::Settings) {
+fn save_window_size(window: &adw::ApplicationWindow, glib_settings: &gio::Settings) {
         
         let size = window.default_size();
         
