@@ -15,4 +15,4 @@ install:
 	mkdir -p $(DESTDIR)/usr/share/applications
 	mkdir -p $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
 	cp -vf data/pika-drivers.svg $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/
-	cp -vf data/pika-drivers.desktop $(DESTDIR)/usr/share/applications/
+	cp -vf data/com.pika.drivers.desktop  $(DESTDIR)/usr/share/applications/
