@@ -40,6 +40,7 @@ then
 	pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "apt remove $pkg -y && sudo apt autoremove -y"
 else
 	if echo $pkg | grep -i nvidia
+ 	then
 		pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "apt update -y && apt purge nvidia-driver-* -y && apt install $pkg -y && sudo apt autoremove -y"
 	else
 		pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "apt update -y && apt install $pkg -y && sudo apt autoremove -y"
