@@ -2,7 +2,12 @@
 
 if [[ $1 == "version" ]]
 then
-	echo "Version: $(apt-cache show $2 | grep Version: | cut -d":" -f2 | head -n1)"
+	if [[ $2 == "pika-rocm-meta" ]]
+	then
+		echo "Version: $(apt-cache show rocm-core | grep Version: | cut -d":" -f2 | head -n1)"
+	else
+		echo "Version: $(apt-cache show $2 | grep Version: | cut -d":" -f2 | head -n1)"
+	fi
 else
 	if [[ $1 == "description" ]]
 	then
@@ -22,7 +27,12 @@ else
 					then
 						DEVICE="$(lspci | grep -i -E 'vga|display|3d' | cut -d":" -f3 | grep -i nvidia)"
 					else
-						DEVICE="$(ubuntu-drivers devices | sed ':a;N;$!ba;s/\nmodel/ /g' | grep vendor | grep -i $2 | sed 's/vendor/Device:/')"
+						if echo "$2" | grep -i -E 'mesa' &> /dev/null
+						then
+							DEVICE="$(lspci | grep -i -E 'vga|display|3d' | cut -d":" -f3)"
+						else
+							DEVICE="$(ubuntu-drivers devices | sed ':a;N;$!ba;s/\nmodel/ /g' | grep vendor | grep -i $2 | sed 's/vendor/Device:/')"
+						fi
 					fi
 				fi
 			fi

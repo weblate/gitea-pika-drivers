@@ -3,6 +3,9 @@
 ### Get traditional ubuntu-driver list
 DRIVERS="$(ubuntu-drivers list | grep -vi -server)"
 
+### Put mesa driver flaours in the list
+DRIVERS="$DRIVERS mesa-hybrid mesa-stable mesa-git"
+
 ### Check if the amdgpu module is loaded
 ### advanced micro devices graphics cards with "radeon" module only do not support the additional drivers
 if inxi -G | grep driver | grep amdgpu &> /dev/null
