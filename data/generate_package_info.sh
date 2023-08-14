@@ -29,7 +29,7 @@ else
 					else
 						if echo "$2" | grep -i -E 'mesa' &> /dev/null
 						then
-							DEVICE="$(lspci | grep -i -E 'vga|display|3d' | cut -d":" -f3)"
+							DEVICE="$(lspci | grep -i -E 'vga|display|3d' | cut -d":" -f3 | grep -vi nvidia)"
 						else
 							DEVICE="$(ubuntu-drivers devices | sed ':a;N;$!ba;s/\nmodel/ /g' | grep vendor | grep -i $2 | sed 's/vendor/Device:/')"
 						fi
