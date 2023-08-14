@@ -2,6 +2,12 @@
     font-size: 14px;
 }
 
+.midLabelWARN {
+    font-size: 14px;
+    color: red;
+}
+
+
 .startLabel {
     font-size: 14px;
 }

@@ -11,7 +11,12 @@ then
 else
 	if [[ $1 == "description" ]]
 	then
-		apt-cache show $2 | grep 'Description*' | cut -d":" -f2 | head -n1
+	    if echo "$2" | grep mesa-git &> /dev/null
+	    then
+	        printf "WARNING: THIS DRIVER IS EXPERMINTAL USE AT YOUR OWN RISK!\n$(apt-cache show mesa-git | grep 'Description*' | cut -d":" -f2 | head -n1)"
+	    else
+		    apt-cache show $2 | grep 'Description*' | cut -d":" -f2 | head -n1
+		fi
 	else
 		if [[ $1 == "device" ]]
 		then

@@ -415,6 +415,9 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
             .justify(Justification::Left)
             .build();
         driver_middle_part_description_label.add_css_class("midLabel");
+        if driver_name = ("mesa-git") {
+            driver_middle_part_description_label.add_css_class("midLabelWARN");
+        }
         driver_version_icon.set_tooltip_text(Some(&String::from_utf8(command_version_label.stdout).unwrap()));
         driver_device_icon.set_tooltip_text(Some(&String::from_utf8(command_device_label.stdout).unwrap()));
         driver_middle_part_description_label.set_text(&String::from_utf8(command_description_label.stdout).unwrap());
