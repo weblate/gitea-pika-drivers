@@ -355,6 +355,8 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
                     driver_icon.set_from_icon_name(Some("input-gaming"));
                 } else if driver_name.contains("nvidia") {
                     driver_icon.set_from_icon_name(Some("nvidia"));
+                } else if driver_name.contains("intel") {
+                    driver_icon.set_from_icon_name(Some("intel"));
                 } else {
                     driver_icon.set_from_icon_name(Some("pika-drivers"));
                 }

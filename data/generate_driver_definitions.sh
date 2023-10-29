@@ -8,7 +8,7 @@ DRIVERS="$DRIVERS mesa-hybrid mesa-stable mesa-git"
 
 ### Check if the amdgpu module is loaded
 ### advanced micro devices graphics cards with "radeon" module only do not support the additional drivers
-if inxi -G | grep driver | grep amdgpu &> /dev/null
+if inxi -G | grep driver | grep -i amdgpu &> /dev/null
 then
 	DRIVERS="$DRIVERS pika-rocm-meta vulkan-amdgpu-pro amf-amdgpu-pro amdvlk opencl-legacy-amdgpu-pro-icd amdgpu-pro-oglp"
 fi
@@ -17,6 +17,12 @@ fi
 if lsusb | grep -i xbox  &> /dev/null
 then
 	DRIVERS="$DRIVERS xone-dkms"
+fi
+
+### Check for Intel GPUs
+if inxi -G | grep driver | grep -i intel &> /dev/null
+then
+	DRIVERS="$DRIVERS intel-gpu-compute"
 fi
 
 ### If no drivers were found set them to random hash to trigger no drivers needed dialog in gui app
