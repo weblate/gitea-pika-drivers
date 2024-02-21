@@ -4,18 +4,41 @@ if [[ $1 == "version" ]]
 then
 	if [[ $2 == "pika-rocm-meta" ]]
 	then
-		echo "Version: $(apt-cache show rocm-core | grep Version: | cut -d":" -f2 | head -n1)"
+		apt-cache show rocm-core | grep Version: | cut -d":" -f2 | head -n1
 	else
-		echo "Version: $(apt-cache show $2 | grep Version: | cut -d":" -f2 | head -n1)"
+		apt-cache show $2 | grep Version: | cut -d":" -f2 | head -n1
 	fi
 elif [[ $1 == "description" ]]
 then
 	if echo "$2" | grep mesa-git &> /dev/null
 	then
-		printf "WARNING: THIS DRIVER IS EXPERMINTAL USE AT YOUR OWN RISK!\n$(apt-cache show mesa-git | grep 'Description*' | cut -d":" -f2 | head -n1)"
+		apt-cache show mesa-git | grep 'Description*' | cut -d":" -f2 | head -n1
 	else
 		apt-cache show $2 | grep 'Description*' | cut -d":" -f2 | head -n1
 	fi
+elif [[ $1 == "icon" ]]
+then
+                if echo "$2" | grep "pika-rocm-meta"&> /dev/null; then
+                    echo "amd"
+                elif echo "$2" | grep "vulkan-amdgpu-pro"&> /dev/null; then
+                    echo "amd"
+                elif echo "$2" | grep "amf-amdgpu-pro"&> /dev/null; then
+                    echo "amd"
+                elif echo "$2" | grep "amdvlk"&> /dev/null; then
+                    echo "amd"
+                elif echo "$2" | grep "opencl-legacy-amdgpu-pro-icd"&> /dev/null; then
+                    echo "amd"
+                elif echo "$2" | grep "amdgpu-pro-oglp"&> /dev/null; then
+                    echo "amd"
+                elif echo "$2" | grep "xone-dkms"&> /dev/null; then
+                    echo "input-gaming"
+                elif echo "$2" | grep "nvidia"&> /dev/null; then
+                    echo "nvidia"
+                elif echo "$2" | grep "intel"&> /dev/null; then
+                    echo "intel"
+                else
+                    echo "pika-drivers"
+                fi
 elif [[ $1 == "device" ]]
 then
 	if echo "$2" | grep -i -E 'pika-rocm-meta|vulkan-amdgpu-pro|amf-amdgpu-pro|amdvlk|opencl-legacy-amdgpu-pro-icd|amdgpu-pro-oglp' &> /dev/null
@@ -36,8 +59,8 @@ then
 	fi
 	if [[ ! -z $DEVICE ]]
 	then
-		echo "Device: $DEVICE"
+		echo "$DEVICE"
 	else
-		echo "Device: UNKNOWN!"
+		echo "UNKNOWN!"
 	fi
 fi
