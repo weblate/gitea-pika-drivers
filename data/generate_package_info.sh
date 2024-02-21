@@ -39,6 +39,13 @@ then
                 else
                     echo "pika-drivers"
                 fi
+elif [[ $1 == "safe" ]]
+then
+                if [[ "$2" == "mesa-git" ]]; then
+                    echo "true"
+                else
+                    echo "false"
+                fi
 elif [[ $1 == "device" ]]
 then
 	if echo "$2" | grep -i -E 'pika-rocm-meta|vulkan-amdgpu-pro|amf-amdgpu-pro|amdvlk|opencl-legacy-amdgpu-pro-icd|amdgpu-pro-oglp' &> /dev/null

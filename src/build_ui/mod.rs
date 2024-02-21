@@ -178,72 +178,6 @@ pub fn build_ui(app: &adw::Application) {
 
 }
 
-
-
-fn modify_package(package: &str, driver_button: &gtk::Image) {
-    let str_pkg = package.to_string();
-    println!("Start installing driver {}: ", package);
-    let wrapper_command = Command::new("x-terminal-emulator")
-        .arg("-e")
-        .arg("bash")
-        .arg("-c")
-        .arg("/usr/lib/pika/drivers/modify-driver.sh \"$1\"")
-        .arg("bash") // $0
-        .arg(&str_pkg) // $1
-        .output()
-        .unwrap();
-    if wrapper_command.status.success() {
-        println!("Installation Command has ended.\n");
-        println!("Installation was successful!\n");
-        println!("Refreshing GUI Labels.\n");
-        driver_button_refresh(package, driver_button);
-        let _success_command = Command::new("bash")
-            .arg("-c")
-            .arg("/usr/lib/pika/drivers/dialog-success.sh \"$1\"")
-            .arg("bash") // $0
-            .arg(&str_pkg) // $1
-            .spawn()
-            .unwrap();
-    } else {
-        println!("Installation Command has ended.\n");
-        println!("Installation was failed :(\n");
-        println!("Refreshing GUI Labels.\n");
-        driver_button_refresh(package, driver_button);
-        println!("Sending error message.\n");
-        let _error_command = Command::new("bash")
-            .arg("-c")
-            .arg("/usr/lib/pika/drivers/dialog-error.sh \"$1\"")
-            .arg("bash") // $0
-            .arg(&str_pkg) // $1
-            .spawn()
-            .unwrap();
-    }
-}
-
-fn driver_button_refresh(driver: &str, driver_button: &gtk::Image) {
-    let  driver_command = Command::new("dpkg")
-        .args(["-s", driver])
-        .output()
-        .unwrap();
-    if driver_command.status.success() {
-        println!("Checking Driver Presence of {}: Success!", driver);
-        if driver.contains("nvidia") {
-            driver_button.set_tooltip_text(Some("Uninstall and revert to nouveau."));
-        } else {
-            driver_button.set_tooltip_text(Some("Uninstall."));
-        }
-        driver_button.set_icon_name(Some("user-trash-symbolic"));
-    } else {
-        println!("Checking Driver Presence of {}: Failure! Driver isn't installed", driver);
-        if driver.contains("nvidia") {
-            driver_button.set_tooltip_text(Some("Install and override nouveau."));
-        } else {
-            driver_button.set_tooltip_text(Some("Install."));
-        }
-        driver_button.set_icon_name(Some("go-down-symbolic"))
-    }
-}
-
 fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_list_utf8: String) {
     let main_box = gtk::Box::builder()
         .margin_top(20)
@@ -286,12 +220,17 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
             .args(["icon", ubuntu_driver])
             .output()
             .unwrap();
+        let command_safe_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+            .args(["safe", ubuntu_driver])
+            .output()
+            .unwrap();
         let ubuntu_driver_package = DriverPackage {
             driver: ubuntu_driver_string,
             version: String::from_utf8(command_version_label.stdout).unwrap().trim().to_string(),
             device: String::from_utf8(command_device_label.stdout).unwrap().trim().to_string(),
             description: String::from_utf8(command_description_label.stdout).unwrap().trim().to_string(),
             icon: String::from_utf8(command_icon_label.stdout).unwrap().trim().to_string(),
+            experimental: String::from_utf8(command_safe_label.stdout).unwrap().trim().parse().unwrap(),
         };
         driver_array.push(ubuntu_driver_package);
         driver_array.sort_by(|a, b| b.cmp(a))
@@ -329,9 +268,63 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
                 .icon_name(driver.clone().icon)
                 .pixel_size(32)
                 .build();
+            let driver_description_label = gtk::Label::builder()
+                .label(driver.clone().description)
+                .build();
+            let driver_content_row = adw::ActionRow::builder()
+                .build();
+            let driver_install_button = gtk::Button::builder()
+                .margin_start(5)
+                .margin_top(5)
+                .margin_bottom(5)
+                .valign(gtk::Align::Center)
+                .label("Install")
+                .tooltip_text("Install the driver package.")
+                .sensitive(false)
+                .build();
+            driver_install_button.add_css_class("suggested-action");
+            let driver_remove_button = gtk::Button::builder()
+                .margin_end(5)
+                .margin_top(5)
+                .margin_bottom(5)
+                .valign(gtk::Align::Center)
+                .label("Uninstall")
+                .tooltip_text("Uninstall the driver package.")
+                .sensitive(false)
+                .build();
+            let driver_action_box = gtk::Box::builder()
+                .homogeneous(true)
+                .build();
+            driver_remove_button.add_css_class("destructive-action");
             driver_expander_row.add_prefix(&driver_icon);
-            driver_expander_row.set_title(&driver.clone().driver);
+            if driver.clone().experimental == true {
+                driver_expander_row.set_title(&(driver.clone().driver + " (WARNING: THIS DRIVER IS EXPERMINTAL USE AT YOUR OWN RISK!)"));
+                driver_expander_row.add_css_class("midLabelWARN");
+            } else {
+                driver_expander_row.set_title(&driver.clone().driver);
+            }
             driver_expander_row.set_subtitle(&driver.clone().version);
+            //
+            driver_content_row.add_prefix(&driver_description_label);
+            driver_action_box.append(&driver_remove_button);
+            driver_action_box.append(&driver_install_button);
+            driver_content_row.add_suffix(&driver_action_box);
+            driver_expander_row.add_row(&driver_content_row);
+            //
+            let command_installed_status = Command::new("dpkg")
+                .args(["-s", &driver.clone().driver])
+                .output()
+                .unwrap();
+            if command_installed_status.status.success() {
+                driver_install_button.set_sensitive(false);
+                if !driver.clone().driver.contains("mesa") {driver_remove_button.set_sensitive(true);}
+            } else {
+                driver_remove_button.set_sensitive(false);
+                driver_install_button.set_sensitive(true);
+            }
+            //
+
+            //
             drivers_list_row.append(&driver_expander_row);
         }
     }

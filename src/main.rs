@@ -19,6 +19,7 @@ pub struct DriverPackage {
     device: String,
     description: String,
     icon: String,
+    experimental: bool,
 }
 
 const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
