@@ -1,6 +1,7 @@
 mod save_window_size;
 mod build_ui;
 
+use std::env;
 use std::collections::HashMap;
 use std::process::Command;
 use std::thread;
@@ -22,16 +23,36 @@ pub struct DriverPackage {
     experimental: bool,
 }
 
-const PROJECT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const APP_ID: &str = "com.github.pikaos-linux.pikafirstsetup";
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const APP_ICON: &str = "pika-drivers";
+pub const APP_DEV: &str = "Cosmo";
+pub const APP_GITHUB: &str = "https://github.com/PikaOS-Linux/pkg-pika-drivers";
 
 use build_ui::build_ui;
 
+use std::boxed::Box;
+
+// Init translations for current crate.
+#[macro_use]
+extern crate rust_i18n;
+//i18n!("locales", fallback = "en_US");
+
+/// main function
 fn main() {
-    let application = adw::Application::new(Some("com.pika.drivers"), Default::default());
+    let current_locale = match env::var_os("LANG") {
+        Some(v) => v.into_string().unwrap(),
+        None => panic!("$LANG is not set"),
+    };
+    //rust_i18n::set_locale(current_locale.strip_suffix(".UTF-8").unwrap());
+    let application = adw::Application::new(
+        Some(APP_ID),
+        Default::default(),
+    );
     application.connect_startup(|app| {
         // The CSS "magic" happens here.
         let provider = CssProvider::new();
-        provider.load_from_data(include_str!("style.css"));
+        provider.load_from_string(include_str!("style.css"));
         // We give the CssProvided to the default screen so the CSS rules we added
         // can be applied to our window.
         gtk::style_context_add_provider_for_display(
@@ -39,7 +60,6 @@ fn main() {
             &provider,
             STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
-
         app.connect_activate(build_ui);
     });
     

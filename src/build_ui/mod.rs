@@ -1,18 +1,50 @@
+use std::{thread, time};
+
+use std::{
+    error::Error,
+};
+
+use duct::cmd;
+use std::io::prelude::*;
+use std::io::BufReader;
 use crate::save_window_size::save_window_size;
 use std::collections::HashMap;
 use std::process::Command;
-use std::thread;
-use adw::{gio, glib};
+use adw::{gio, glib, Window};
 use adw::glib::{clone, MainContext, Priority};
 use gtk::Orientation;
 use gtk::prelude::{BoxExt, ButtonExt, FrameExt, GtkWindowExt, WidgetExt};
-use crate::{DriverPackage, PROJECT_VERSION};
+use crate::{DriverPackage, APP_ICON, VERSION, APP_DEV};
 use adw::prelude::{*};
+
+const DRIVER_MODIFY_PROG: &str = r###"
+#! /bin/bash
+DRIVER="$0"
+/usr/lib/pika/drivers/modify-driver.sh "${DRIVER}"
+"###;
+fn driver_modify(
+    log_loop_sender: async_channel::Sender<String>,
+    driver_pkg: &str,
+) -> Result<(), std::boxed::Box<dyn Error + Send + Sync>> {
+    let (pipe_reader, pipe_writer) = os_pipe::pipe()?;
+    let child = cmd!("bash", "-c", DRIVER_MODIFY_PROG, driver_pkg)
+        .stderr_to_stdout()
+        .stdout_file(pipe_writer)
+        .start()?;
+    for line in BufReader::new(pipe_reader).lines() {
+        log_loop_sender
+            .send_blocking(line?)
+            .expect("Channel needs to be opened.")
+    }
+    child.wait()?;
+
+    Ok(())
+}
 
 pub fn build_ui(app: &adw::Application) {
     gtk::glib::set_prgname(Some("Pika Drivers"));
     glib::set_application_name("Pika Drivers");
-    let glib_settings = gio::Settings::new("com.pika.drivers");
+    let glib_settings = gio::Settings::new("com.github.pikaos-linux.pikadrivers");
 
     let content_box = gtk::Box::builder()
         .orientation(Orientation::Vertical)
@@ -31,7 +63,7 @@ pub fn build_ui(app: &adw::Application) {
         .build();
 
     let loading_icon = gtk::Image::builder()
-        .icon_name("pika-drivers")
+        .icon_name(APP_ICON)
         .margin_top(20)
         .margin_bottom(20)
         .margin_start(20)
@@ -70,7 +102,7 @@ pub fn build_ui(app: &adw::Application) {
         .title("PikaOS Driver Manager")
         .application(app)
         .content(&content_box)
-        .icon_name("pika-drivers")
+        .icon_name(APP_ICON)
         .default_width(glib_settings.int("window-width"))
         .default_height(glib_settings.int("window-height"))
         .width_request(900)
@@ -83,36 +115,6 @@ pub fn build_ui(app: &adw::Application) {
         window.maximize()
     }
 
-
-
-    let credits_window_box =  gtk::Box::builder()
-        .orientation(Orientation::Vertical)
-        .build();
-
-    let credits_icon = gtk::Image::builder()
-        .icon_name("pika-drivers")
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
-        .pixel_size(128)
-        .build();
-
-    let credits_label = gtk::Label::builder()
-        .label("Pika Drivers\nMade by: Cosmo")
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
-        .build();
-
-    let credits_frame = gtk::Frame::builder()
-        .margin_top(8)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
-        .build();
-
     let window_title_bar = gtk::HeaderBar::builder()
         .show_title_buttons(true)
         .build();
@@ -121,26 +123,13 @@ pub fn build_ui(app: &adw::Application) {
         .icon_name("dialog-information-symbolic")
         .build();
 
-    credits_frame.set_label_align(0.5);
-
-    credits_frame.set_label(Some(PROJECT_VERSION));
-
-    let credits_window = adw::Window::builder()
-        .content(&credits_window_box)
+    let credits_window = adw::AboutWindow::builder()
+        .icon_name(APP_ICON)
         .transient_for(&window)
-        .resizable(false)
+        .version(VERSION)
         .hide_on_close(true)
-        .icon_name("pika-drivers")
-        .startup_id("pika-drivers")
+        .developer_name(APP_DEV)
         .build();
-
-    credits_window_box.append(&gtk::HeaderBar::builder().show_title_buttons(true).build());
-    credits_window_box.append(&credits_icon);
-    credits_window_box.append(&credits_label);
-    credits_window_box.append(&credits_frame);
-
-    content_box.append(&window_title_bar);
-    content_box.append(&loading_box);
 
     window_title_bar.pack_end(&credits_button.clone());
 
@@ -168,9 +157,9 @@ pub fn build_ui(app: &adw::Application) {
 
     let drive_hws_main_context = MainContext::default();
     // The main loop executes the asynchronous block
-    drive_hws_main_context.spawn_local(clone!(@weak content_box, @weak loading_box => async move {
+    drive_hws_main_context.spawn_local(clone!(@weak content_box, @weak loading_box, @weak window => async move {
         while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
-            get_drivers(&content_box, &loading_box, drive_hws_state);
+            get_drivers(&content_box, &loading_box, drive_hws_state, &window);
         }
     }));
 
@@ -178,7 +167,7 @@ pub fn build_ui(app: &adw::Application) {
 
 }
 
-fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_list_utf8: String) {
+fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_list_utf8: String, window: &adw::ApplicationWindow) {
     let main_box = gtk::Box::builder()
         .margin_top(20)
         .margin_bottom(20)
@@ -263,6 +252,11 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
         main_box.append(&drivers_list_row);
 
         for driver in group.iter() {
+            let (log_loop_sender, log_loop_receiver) = async_channel::unbounded();
+            let log_loop_sender: async_channel::Sender<String> = log_loop_sender.clone();
+
+            let (log_status_loop_sender, log_status_loop_receiver) = async_channel::unbounded();
+            let log_status_loop_sender: async_channel::Sender<bool> = log_status_loop_sender.clone();
             let driver_expander_row = adw::ExpanderRow::new();
             let driver_icon = gtk::Image::builder()
                 .icon_name(driver.clone().icon)
@@ -323,7 +317,60 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
                 driver_install_button.set_sensitive(true);
             }
             //
+            let driver_install_log_terminal_buffer = gtk::TextBuffer::builder().build();
 
+            let driver_install_log_terminal = gtk::TextView::builder()
+                .vexpand(true)
+                .hexpand(true)
+                .editable(false)
+                .buffer(&driver_install_log_terminal_buffer)
+                .build();
+
+            let driver_install_log_terminal_scroll = gtk::ScrolledWindow::builder()
+                .width_request(400)
+                .height_request(200)
+                .vexpand(true)
+                .hexpand(true)
+                .child(&driver_install_log_terminal)
+                .build();
+
+            let driver_install_dialog = adw::MessageDialog::builder()
+                .transient_for(window)
+                .hide_on_close(true)
+                .extra_child(&driver_install_log_terminal_scroll)
+                .width_request(400)
+                .height_request(200)
+                .heading("driver_install_dialog_heading")
+                .build();
+            driver_install_dialog.add_response("driver_install_dialog_ok", "system_update_dialog_ok_label");
+
+            let log_loop_context = MainContext::default();
+            // The main loop executes the asynchronous block
+            log_loop_context.spawn_local(clone!(@weak driver_install_log_terminal_buffer, @weak driver_install_dialog => async move {
+            while let Ok(state) = log_loop_receiver.recv().await {
+                driver_install_log_terminal_buffer.insert(&mut driver_install_log_terminal_buffer.end_iter(), &("\n".to_string() + &state))
+            }
+            }));
+
+                    let log_status_loop_context = MainContext::default();
+                    // The main loop executes the asynchronous block
+                    log_status_loop_context.spawn_local(clone!(@weak driver_install_dialog => async move {
+                    while let Ok(state) = log_status_loop_receiver.recv().await {
+                        if state == true {
+                            driver_install_dialog.set_response_enabled("driver_install_dialog_ok", true);
+                            driver_install_dialog.set_body("driver_install_dialog_success_true");
+                        } else {
+                            driver_install_dialog.set_response_enabled("driver_install_dialog_ok", true);
+                            driver_install_dialog.set_body("driver_install_dialog_success_false");
+                        }
+                    }
+            }));
+
+            driver_install_log_terminal_buffer.connect_changed(clone!(@weak driver_install_log_terminal, @weak driver_install_log_terminal_buffer,@weak driver_install_log_terminal_scroll => move |_|{
+               if driver_install_log_terminal_scroll.vadjustment().upper() - driver_install_log_terminal_scroll.vadjustment().value() > 100.0 {
+                    driver_install_log_terminal_scroll.vadjustment().set_value(driver_install_log_terminal_scroll.vadjustment().upper())
+                }
+            }));
             //
             drivers_list_row.append(&driver_expander_row);
         }
