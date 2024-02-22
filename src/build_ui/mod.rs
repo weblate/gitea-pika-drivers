@@ -1,21 +1,18 @@
 use crate::config::*;
 use crate::save_window_size::save_window_size;
 use crate::DriverPackage;
-use adw::glib::{clone, MainContext, Priority};
+use adw::glib::{clone, MainContext};
 use adw::prelude::*;
 use adw::{gio, glib};
 use duct::cmd;
 use gtk::prelude::{BoxExt, ButtonExt, FrameExt, GtkWindowExt, WidgetExt};
 use gtk::Orientation;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::BufRead;
 use std::io::BufReader;
-use std::ops::{Deref, DerefMut};
 use std::process::Command;
-use std::rc::Rc;
-use std::thread;
+use users::*;
 
 pub fn build_ui(app: &adw::Application) {
     gtk::glib::set_prgname(Some(APP_NAME));
@@ -374,6 +371,9 @@ fn get_drivers(
                 .build();
             driver_install_dialog
                 .add_response("driver_install_dialog_ok", "driver_install_dialog_ok_label");
+            driver_install_dialog
+                .add_response("driver_install_dialog_reboot", "driver_install_dialog_reboot_label");
+            driver_install_dialog.set_response_appearance("driver_install_dialog_reboot", adw::ResponseAppearance::Suggested);
             //
 
             //
@@ -391,10 +391,20 @@ fn get_drivers(
                     while let Ok(state) = log_status_loop_receiver.recv().await {
                         if state == true {
                             driver_install_dialog.set_response_enabled("driver_install_dialog_ok", true);
+                            if get_current_username().unwrap() == "pikaos" {
+                                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", false);
+                            } else {
+                                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", true);
+                            }
                             driver_install_dialog.set_body(&t!("driver_install_dialog_success_true"));
                         } else {
                             driver_install_dialog.set_response_enabled("driver_install_dialog_ok", true);
                             driver_install_dialog.set_body(&t!("driver_install_dialog_success_false"));
+                            if get_current_username().unwrap() == "pikaos" {
+                                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", false);
+                            } else {
+                                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", true);
+                            }
                         }
                     }
             }));
@@ -408,8 +418,16 @@ fn get_drivers(
             driver_install_button.connect_clicked(clone!(@weak driver_install_log_terminal,@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_sender, @strong log_status_loop_sender  => move |_| {
                 driver_install_log_terminal_buffer.delete(&mut driver_install_log_terminal_buffer.bounds().0, &mut driver_install_log_terminal_buffer.bounds().1);
                 driver_install_dialog.set_response_enabled("driver_install_dialog_ok", false);
+                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", false);
                 driver_install_dialog.set_body("");
-                driver_install_dialog.present();
+                driver_install_dialog.choose(None::<&gio::Cancellable>, move |choice| {
+                if choice == "driver_install_dialog_reboot" {
+                        Command::new("systemctl")
+                        .arg("reboot")
+                        .spawn()
+                        .expect("systemctl reboot failed to start");
+                }
+                });
                 gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind => move || {
                         let command = driver_modify(log_loop_sender, &driver_package_ind);
                         match command {
