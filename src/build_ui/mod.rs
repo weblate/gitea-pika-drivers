@@ -276,37 +276,14 @@ fn get_drivers(
 
         main_box.append(&drivers_list_row);
 
-        let (log_loop_sender, log_loop_receiver) = async_channel::unbounded();
-        let log_loop_sender: async_channel::Sender<String> = log_loop_sender.clone();
-
-        let (log_status_loop_sender, log_status_loop_receiver) = async_channel::unbounded();
-        let log_status_loop_sender: async_channel::Sender<bool> = log_status_loop_sender.clone();
-
-        let apply_action = gtk::Button::new();
-        apply_action.set_visible(false);
-        main_box.append(&apply_action);
-
-        let driver_pkg_cell = gtk::TextBuffer::builder().build();
-
-        apply_action.connect_clicked(clone!(@weak driver_pkg_cell, @strong log_loop_sender, @strong log_status_loop_sender => move |_| {
-            let driver_pkg_cell_text = driver_pkg_cell.text(&driver_pkg_cell.start_iter(), &driver_pkg_cell.end_iter(), true).to_string();
-            println!("Currently Processing: {}", driver_pkg_cell_text);
-            gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender => move || {
-                    let command = driver_modify(log_loop_sender, &driver_pkg_cell_text);
-                    match command {
-                        Ok(_) => {
-                            println!("Status: Driver modify Successful");
-                            log_status_loop_sender.send_blocking(true).expect("The channel needs to be open.");
-                        }
-                        Err(_) => {
-                            println!("Status: Driver modify Failed");
-                            log_status_loop_sender.send_blocking(false).expect("The channel needs to be open.");
-                        }
-                    }
-            }));
-        }));
-
         for driver in group.iter() {
+
+            let (log_loop_sender, log_loop_receiver) = async_channel::unbounded();
+            let log_loop_sender: async_channel::Sender<String> = log_loop_sender.clone();
+
+            let (log_status_loop_sender, log_status_loop_receiver) = async_channel::unbounded();
+            let log_status_loop_sender: async_channel::Sender<bool> = log_status_loop_sender.clone();
+
             let driver_package_ind = driver.driver.to_owned();
             let driver_expander_row = adw::ExpanderRow::new();
             let driver_icon = gtk::Image::builder()
@@ -428,14 +405,24 @@ fn get_drivers(
                 }
             }));
             //
-            driver_install_button.connect_clicked(clone!(@weak apply_action,@weak driver_install_log_terminal,@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_sender, @strong log_status_loop_sender, @strong driver_pkg_cell  => move |_| {
+            driver_install_button.connect_clicked(clone!(@weak driver_install_log_terminal,@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_sender, @strong log_status_loop_sender  => move |_| {
                 driver_install_log_terminal_buffer.delete(&mut driver_install_log_terminal_buffer.bounds().0, &mut driver_install_log_terminal_buffer.bounds().1);
                 driver_install_dialog.set_response_enabled("driver_install_dialog_ok", false);
                 driver_install_dialog.set_body("");
                 driver_install_dialog.present();
-                driver_pkg_cell.delete(&mut driver_pkg_cell.start_iter(), &mut driver_pkg_cell.end_iter());
-                driver_pkg_cell.insert(&mut driver_pkg_cell.end_iter(), &driver_package_ind);
-                apply_action.emit_clicked();
+                gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind => move || {
+                        let command = driver_modify(log_loop_sender, &driver_package_ind);
+                        match command {
+                            Ok(_) => {
+                                println!("Status: Driver modify Successful");
+                                log_status_loop_sender.send_blocking(true).expect("The channel needs to be open.");
+                            }
+                            Err(_) => {
+                                println!("Status: Driver modify Failed");
+                                log_status_loop_sender.send_blocking(false).expect("The channel needs to be open.");
+                            }
+                        }
+                }));
             }));
             //
             drivers_list_row.append(&driver_expander_row);
