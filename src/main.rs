@@ -1,5 +1,7 @@
 mod save_window_size;
 mod build_ui;
+mod config;
+use config::{*};
 
 use std::env;
 use std::collections::HashMap;
@@ -23,12 +25,6 @@ pub struct DriverPackage {
     experimental: bool,
 }
 
-pub const APP_ID: &str = "com.github.pikaos-linux.pikafirstsetup";
-pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const APP_ICON: &str = "pika-drivers";
-pub const APP_DEV: &str = "Cosmo";
-pub const APP_GITHUB: &str = "https://github.com/PikaOS-Linux/pkg-pika-drivers";
-
 use build_ui::build_ui;
 
 use std::boxed::Box;
@@ -36,7 +32,7 @@ use std::boxed::Box;
 // Init translations for current crate.
 #[macro_use]
 extern crate rust_i18n;
-//i18n!("locales", fallback = "en_US");
+i18n!("locales", fallback = "en_US");
 
 /// main function
 fn main() {
@@ -44,7 +40,7 @@ fn main() {
         Some(v) => v.into_string().unwrap(),
         None => panic!("$LANG is not set"),
     };
-    //rust_i18n::set_locale(current_locale.strip_suffix(".UTF-8").unwrap());
+    rust_i18n::set_locale(current_locale.strip_suffix(".UTF-8").unwrap());
     let application = adw::Application::new(
         Some(APP_ID),
         Default::default(),
@@ -62,6 +58,6 @@ fn main() {
         );
         app.connect_activate(build_ui);
     });
-    
+
     application.run();
 }
