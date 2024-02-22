@@ -1,18 +1,21 @@
-use std::io::BufReader;
-use std::io::BufRead;
-use std::error::Error;
-use duct::cmd;
+use crate::config::*;
 use crate::save_window_size::save_window_size;
-use std::collections::HashMap;
-use std::process::Command;
-use std::thread;
-use adw::{gio, glib};
+use crate::DriverPackage;
 use adw::glib::{clone, MainContext, Priority};
-use gtk::Orientation;
+use adw::prelude::*;
+use adw::{gio, glib};
+use duct::cmd;
 use gtk::prelude::{BoxExt, ButtonExt, FrameExt, GtkWindowExt, WidgetExt};
-use crate::{DriverPackage};
-use adw::prelude::{*};
-use crate::config::{*};
+use gtk::Orientation;
+use std::cell::RefCell;
+use std::collections::HashMap;
+use std::error::Error;
+use std::io::BufRead;
+use std::io::BufReader;
+use std::ops::{Deref, DerefMut};
+use std::process::Command;
+use std::rc::Rc;
+use std::thread;
 
 pub fn build_ui(app: &adw::Application) {
     gtk::glib::set_prgname(Some(APP_NAME));
@@ -88,9 +91,7 @@ pub fn build_ui(app: &adw::Application) {
         window.maximize()
     }
 
-    let window_title_bar = gtk::HeaderBar::builder()
-        .show_title_buttons(true)
-        .build();
+    let window_title_bar = gtk::HeaderBar::builder().show_title_buttons(true).build();
 
     let credits_button = gtk::Button::builder()
         .icon_name("dialog-information-symbolic")
@@ -121,9 +122,10 @@ pub fn build_ui(app: &adw::Application) {
     // The long running operation runs now in a separate thread
     gio::spawn_blocking(move || {
         println!("Checking HW paramter script for available drivers:\n");
-        let ubuntu_drivers_list_cli = Command::new("/usr/lib/pika/drivers/generate_driver_definitions.sh")
-            .output()
-            .expect("failed to execute process");
+        let ubuntu_drivers_list_cli =
+            Command::new("/usr/lib/pika/drivers/generate_driver_definitions.sh")
+                .output()
+                .expect("failed to execute process");
 
         let ubuntu_drivers_list_utf8 = String::from_utf8(ubuntu_drivers_list_cli.stdout).unwrap();
         drive_hws_sender
@@ -140,7 +142,6 @@ pub fn build_ui(app: &adw::Application) {
             get_drivers(&content_box, &loading_box, drive_hws_state, &window);
         }
     }));
-
 }
 
 const DRIVER_MODIFY_PROG: &str = r###"
@@ -167,7 +168,12 @@ fn driver_modify(
     Ok(())
 }
 
-fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_list_utf8: String, window: &adw::ApplicationWindow) {
+fn get_drivers(
+    main_window: &gtk::Box,
+    loading_box: &gtk::Box,
+    ubuntu_drivers_list_utf8: String,
+    window: &adw::ApplicationWindow,
+) {
     let main_box = gtk::Box::builder()
         .margin_top(20)
         .margin_bottom(20)
@@ -197,10 +203,11 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
             .args(["version", ubuntu_driver])
             .output()
             .unwrap();
-        let command_description_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
-            .args(["description", ubuntu_driver])
-            .output()
-            .unwrap();
+        let command_description_label =
+            Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+                .args(["description", ubuntu_driver])
+                .output()
+                .unwrap();
         let command_device_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
             .args(["device", ubuntu_driver])
             .output()
@@ -215,18 +222,36 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
             .unwrap();
         let ubuntu_driver_package = DriverPackage {
             driver: ubuntu_driver_string,
-            version: String::from_utf8(command_version_label.stdout).unwrap().trim().to_string(),
-            device: String::from_utf8(command_device_label.stdout).unwrap().trim().to_string(),
-            description: String::from_utf8(command_description_label.stdout).unwrap().trim().to_string(),
-            icon: String::from_utf8(command_icon_label.stdout).unwrap().trim().to_string(),
-            experimental: String::from_utf8(command_safe_label.stdout).unwrap().trim().parse().unwrap(),
+            version: String::from_utf8(command_version_label.stdout)
+                .unwrap()
+                .trim()
+                .to_string(),
+            device: String::from_utf8(command_device_label.stdout)
+                .unwrap()
+                .trim()
+                .to_string(),
+            description: String::from_utf8(command_description_label.stdout)
+                .unwrap()
+                .trim()
+                .to_string(),
+            icon: String::from_utf8(command_icon_label.stdout)
+                .unwrap()
+                .trim()
+                .to_string(),
+            experimental: String::from_utf8(command_safe_label.stdout)
+                .unwrap()
+                .trim()
+                .parse()
+                .unwrap(),
         };
         driver_array.push(ubuntu_driver_package);
         driver_array.sort_by(|a, b| b.cmp(a))
     }
 
     driver_array.into_iter().for_each(|driver_package| {
-        let group = device_groups.entry(driver_package.clone().device).or_insert(vec![]);
+        let group = device_groups
+            .entry(driver_package.clone().device.to_owned())
+            .or_insert(vec![]);
         group.push(driver_package);
     });
     for (device, group) in device_groups {
@@ -251,12 +276,38 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
 
         main_box.append(&drivers_list_row);
 
-        for driver in group.iter() {
-            let (log_loop_sender, log_loop_receiver) = async_channel::unbounded();
-            let log_loop_sender: async_channel::Sender<String> = log_loop_sender.clone();
+        let (log_loop_sender, log_loop_receiver) = async_channel::unbounded();
+        let log_loop_sender: async_channel::Sender<String> = log_loop_sender.clone();
 
-            let (log_status_loop_sender, log_status_loop_receiver) = async_channel::unbounded();
-            let log_status_loop_sender: async_channel::Sender<bool> = log_status_loop_sender.clone();
+        let (log_status_loop_sender, log_status_loop_receiver) = async_channel::unbounded();
+        let log_status_loop_sender: async_channel::Sender<bool> = log_status_loop_sender.clone();
+
+        let apply_action = gtk::Button::new();
+        apply_action.set_visible(false);
+        main_box.append(&apply_action);
+
+        let driver_pkg_cell = gtk::TextBuffer::builder().build();
+
+        apply_action.connect_clicked(clone!(@weak driver_pkg_cell, @strong log_loop_sender, @strong log_status_loop_sender => move |_| {
+            let driver_pkg_cell_text = driver_pkg_cell.text(&driver_pkg_cell.start_iter(), &driver_pkg_cell.end_iter(), true).to_string();
+            println!("{}", driver_pkg_cell_text);
+            gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender => move || {
+                    let command = driver_modify(log_loop_sender, &driver_pkg_cell_text);
+                    match command {
+                        Ok(_) => {
+                            println!("Status: Driver modify Successful");
+                            log_status_loop_sender.send_blocking(true).expect("The channel needs to be open.");
+                        }
+                        Err(_) => {
+                            println!("Status: Driver modify Failed");
+                            log_status_loop_sender.send_blocking(false).expect("The channel needs to be open.");
+                        }
+                    }
+            }));
+        }));
+
+        for driver in group.iter() {
+            let driver_package_ind = driver.driver.to_owned();
             let driver_expander_row = adw::ExpanderRow::new();
             let driver_icon = gtk::Image::builder()
                 .icon_name(driver.clone().icon)
@@ -265,8 +316,7 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
             let driver_description_label = gtk::Label::builder()
                 .label(driver.clone().description)
                 .build();
-            let driver_content_row = adw::ActionRow::builder()
-                .build();
+            let driver_content_row = adw::ActionRow::builder().build();
             let driver_install_button = gtk::Button::builder()
                 .margin_start(5)
                 .margin_top(5)
@@ -286,13 +336,14 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
                 .tooltip_text("Uninstall the driver package.")
                 .sensitive(false)
                 .build();
-            let driver_action_box = gtk::Box::builder()
-                .homogeneous(true)
-                .build();
+            let driver_action_box = gtk::Box::builder().homogeneous(true).build();
             driver_remove_button.add_css_class("destructive-action");
             driver_expander_row.add_prefix(&driver_icon);
             if driver.clone().experimental == true {
-                driver_expander_row.set_title(&(driver.clone().driver + " (WARNING: THIS DRIVER IS EXPERMINTAL USE AT YOUR OWN RISK!)"));
+                driver_expander_row.set_title(
+                    &(driver.clone().driver
+                        + " (WARNING: THIS DRIVER IS EXPERMINTAL USE AT YOUR OWN RISK!)"),
+                );
                 driver_expander_row.add_css_class("midLabelWARN");
             } else {
                 driver_expander_row.set_title(&driver.clone().driver);
@@ -311,7 +362,9 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
                 .unwrap();
             if command_installed_status.status.success() {
                 driver_install_button.set_sensitive(false);
-                if !driver.clone().driver.contains("mesa") {driver_remove_button.set_sensitive(true);}
+                if !driver.clone().driver.contains("mesa") {
+                    driver_remove_button.set_sensitive(true);
+                }
             } else {
                 driver_remove_button.set_sensitive(false);
                 driver_install_button.set_sensitive(true);
@@ -342,11 +395,14 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
                 .height_request(200)
                 .heading("driver_install_dialog_heading")
                 .build();
-            driver_install_dialog.add_response("driver_install_dialog_ok", "system_update_dialog_ok_label");
+            driver_install_dialog
+                .add_response("driver_install_dialog_ok", "driver_install_dialog_ok_label");
+            //
 
+            //
             let log_loop_context = MainContext::default();
             // The main loop executes the asynchronous block
-            log_loop_context.spawn_local(clone!(@weak driver_install_log_terminal_buffer, @weak driver_install_dialog => async move {
+            log_loop_context.spawn_local(clone!(@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_receiver => async move {
             while let Ok(state) = log_loop_receiver.recv().await {
                 driver_install_log_terminal_buffer.insert(&mut driver_install_log_terminal_buffer.end_iter(), &("\n".to_string() + &state))
             }
@@ -354,43 +410,31 @@ fn get_drivers(main_window: &gtk::Box, loading_box: &gtk::Box, ubuntu_drivers_li
 
             let log_status_loop_context = MainContext::default();
             // The main loop executes the asynchronous block
-            log_status_loop_context.spawn_local(clone!(@weak driver_install_dialog => async move {
+            log_status_loop_context.spawn_local(clone!(@weak driver_install_dialog, @strong log_status_loop_receiver => async move {
                     while let Ok(state) = log_status_loop_receiver.recv().await {
                         if state == true {
                             driver_install_dialog.set_response_enabled("driver_install_dialog_ok", true);
-                            driver_install_dialog.set_body("driver_install_dialog_success_true");
+                            driver_install_dialog.set_body(&t!("driver_install_dialog_success_true"));
                         } else {
                             driver_install_dialog.set_response_enabled("driver_install_dialog_ok", true);
-                            driver_install_dialog.set_body("driver_install_dialog_success_false");
+                            driver_install_dialog.set_body(&t!("driver_install_dialog_success_false"));
                         }
                     }
             }));
-
+            //
             driver_install_log_terminal_buffer.connect_changed(clone!(@weak driver_install_log_terminal, @weak driver_install_log_terminal_buffer,@weak driver_install_log_terminal_scroll => move |_|{
                if driver_install_log_terminal_scroll.vadjustment().upper() - driver_install_log_terminal_scroll.vadjustment().value() > 100.0 {
                     driver_install_log_terminal_scroll.vadjustment().set_value(driver_install_log_terminal_scroll.vadjustment().upper())
                 }
             }));
             //
-            driver_install_button.connect_clicked(clone!(@weak driver_install_log_terminal,@weak driver_install_log_terminal_buffer, @weak driver_install_dialog => move |_| {
-            driver_install_log_terminal_buffer.delete(&mut driver_install_log_terminal_buffer.bounds().0, &mut driver_install_log_terminal_buffer.bounds().1);
-            driver_install_dialog.set_response_enabled("system_update_dialog_ok", false);
-            driver_install_dialog.set_body("");
-            driver_install_dialog.present();
-                // The long running operation runs now in a separate thread
-            gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender => move || {
-                let command = driver_modify(log_loop_sender, &driver.clone().driver);
-                match command {
-                        Ok(_) => {
-                            println!("Status: Driver install Successful");
-                            log_status_loop_sender.send_blocking(true).expect("The channel needs to be open.");
-                        }
-                        Err(_) => {
-                            println!("Status: Driver install Failed");
-                            log_status_loop_sender.send_blocking(false).expect("The channel needs to be open.");
-                        }
-                }
-            }));
+            driver_install_button.connect_clicked(clone!(@weak apply_action,@weak driver_install_log_terminal,@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_sender, @strong log_status_loop_sender, @strong driver_pkg_cell  => move |_| {
+                driver_install_log_terminal_buffer.delete(&mut driver_install_log_terminal_buffer.bounds().0, &mut driver_install_log_terminal_buffer.bounds().1);
+                driver_install_dialog.set_response_enabled("driver_install_dialog_ok", false);
+                driver_install_dialog.set_body("");
+                driver_install_dialog.present();
+                driver_pkg_cell.insert(&mut driver_pkg_cell.end_iter(), &driver_package_ind);
+                apply_action.emit_clicked();
             }));
             //
             drivers_list_row.append(&driver_expander_row);

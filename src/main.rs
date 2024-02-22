@@ -1,19 +1,19 @@
-mod save_window_size;
 mod build_ui;
 mod config;
-use config::{*};
+mod save_window_size;
+use config::*;
 
-use std::env;
-use std::collections::HashMap;
-use std::process::Command;
-use std::thread;
-use gtk::prelude::*;
-use gtk::*;
-use gtk::prelude::*;
-use glib::*;
+use adw::prelude::*;
 use adw::*;
 use gdk::Display;
-use adw::prelude::*;
+use glib::*;
+use gtk::prelude::*;
+use gtk::prelude::*;
+use gtk::*;
+use std::collections::HashMap;
+use std::env;
+use std::process::Command;
+use std::thread;
 
 #[derive(PartialEq, Debug, Eq, Hash, Clone, Ord, PartialOrd)]
 pub struct DriverPackage {
@@ -41,10 +41,7 @@ fn main() {
         None => panic!("$LANG is not set"),
     };
     rust_i18n::set_locale(current_locale.strip_suffix(".UTF-8").unwrap());
-    let application = adw::Application::new(
-        Some(APP_ID),
-        Default::default(),
-    );
+    let application = adw::Application::new(Some(APP_ID), Default::default());
     application.connect_startup(|app| {
         // The CSS "magic" happens here.
         let provider = CssProvider::new();
