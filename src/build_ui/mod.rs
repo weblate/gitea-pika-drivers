@@ -290,7 +290,7 @@ fn get_drivers(
 
         apply_action.connect_clicked(clone!(@weak driver_pkg_cell, @strong log_loop_sender, @strong log_status_loop_sender => move |_| {
             let driver_pkg_cell_text = driver_pkg_cell.text(&driver_pkg_cell.start_iter(), &driver_pkg_cell.end_iter(), true).to_string();
-            println!("{}", driver_pkg_cell_text);
+            println!("Currently Processing: {}", driver_pkg_cell_text);
             gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender => move || {
                     let command = driver_modify(log_loop_sender, &driver_pkg_cell_text);
                     match command {
@@ -433,6 +433,7 @@ fn get_drivers(
                 driver_install_dialog.set_response_enabled("driver_install_dialog_ok", false);
                 driver_install_dialog.set_body("");
                 driver_install_dialog.present();
+                driver_pkg_cell.delete(&mut driver_pkg_cell.start_iter(), &mut driver_pkg_cell.end_iter());
                 driver_pkg_cell.insert(&mut driver_pkg_cell.end_iter(), &driver_package_ind);
                 apply_action.emit_clicked();
             }));
