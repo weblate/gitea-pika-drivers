@@ -58,8 +58,8 @@ pub fn build_ui(app: &adw::Application) {
         .margin_top(20)
         .margin_bottom(20)
         .margin_start(20)
-        .vexpand(true)
-        .hexpand(true)
+        .width_request(120)
+        .height_request(120)
         .margin_end(20)
         .build();
 
@@ -123,7 +123,7 @@ pub fn build_ui(app: &adw::Application) {
     credits_button.connect_clicked(clone!(@weak credits_button => move |_| credits_window.present()));
 
     println!("Downloading driver DB...");
-    let data =  reqwest::blocking::get("https://raw.githubusercontent.com/PikaOS-Linux/pkg-pika-drivers/main/driver-db.json").unwrap().text().unwrap();
+    let data =  reqwest::blocking::get(DRIVER_DB_JSON_URL).unwrap().text().unwrap();
 
     let (drive_hws_sender, drive_hws_receiver) = async_channel::unbounded();
     let drive_hws_sender = drive_hws_sender.clone();
@@ -185,7 +185,7 @@ pub fn build_ui(app: &adw::Application) {
     // The main loop executes the asynchronous block
     drive_hws_main_context.spawn_local(clone!(@weak content_box, @weak loading_box, @strong data => async move {
         while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
-            get_drivers(&content_box, &loading_box, drive_hws_state, &window, &data);
+            get_drivers(&content_box, &loading_box, drive_hws_state, &window);
         }
     }));
 }
@@ -219,7 +219,6 @@ fn get_drivers(
     loading_box: &gtk::Box,
     driver_array: Vec<DriverPackage>,
     window: &adw::ApplicationWindow,
-    json_data: &String
 ) {
     let main_box = gtk::Box::builder()
         .margin_top(20)
