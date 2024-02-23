@@ -1,40 +1,58 @@
 {
   "drivers": [
     {
+      "driver": "mesa-stable",
+      "icon": "video-display",
+      "experimental": false,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -vi nvidia"
+    },
+    {
+      "driver": "mesa-hybrid",
+      "icon": "video-display",
+      "experimental": false,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -vi nvidia"
+    },
+    {
+      "driver": "mesa-git",
+      "icon": "video-display",
+      "experimental": true,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -vi nvidia"
+    },
+    {
       "driver": "pika-rocm-meta",
       "icon": "amd",
       "experimental": false,
-      "detection": "inxi -G | grep driver | grep -i amdgpu"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
       "driver": "vulkan-amdgpu-pro",
       "icon": "amd",
       "experimental": false,
-      "detection": "inxi -G | grep driver | grep -i amdgpu"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
       "driver": "amf-amdgpu-pro",
       "icon": "amd",
       "experimental": false,
-      "detection": "inxi -G | grep driver | grep -i amdgpu"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
       "driver": "amdvlk",
       "icon": "amd",
       "experimental": false,
-      "detection": "inxi -G | grep driver | grep -i amdgpu"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
       "driver": "opencl-legacy-amdgpu-pro-icd",
       "icon": "amd",
       "experimental": false,
-      "detection": "inxi -G | grep driver | grep -i amdgpu"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
       "driver": "amdgpu-pro-oglp",
       "icon": "amd",
       "experimental": false,
-      "detection": "inxi -G | grep driver | grep -i amdgpu"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
       "driver": "nvidia-driver-525",
@@ -94,7 +112,7 @@
       "driver": "intel-gpu-compute",
       "icon": "intel",
       "experimental": false,
-      "detection": "inxi -G | grep driver | grep -i intel"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
     }
   ]
 }

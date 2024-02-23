@@ -120,12 +120,14 @@ pub fn build_ui(app: &adw::Application) {
 
     credits_button.connect_clicked(clone!(@weak credits_button => move |_| credits_window.present()));
 
+    println!("Downloading driver DB...");
+    let data =  reqwest::blocking::get("https://raw.githubusercontent.com/PikaOS-Linux/pkg-pika-drivers/main/driver-db.json").unwrap().text().unwrap();
+
     let (drive_hws_sender, drive_hws_receiver) = async_channel::unbounded();
     let drive_hws_sender = drive_hws_sender.clone();
     // The long running operation runs now in a separate thread
-    gio::spawn_blocking(move || {
-        println!("Downloading driver DB...");
-        let data =  reqwest::blocking::get("https://raw.githubusercontent.com/PikaOS-Linux/pkg-pika-drivers/main/driver-db.json").unwrap().text().unwrap();
+    gio::spawn_blocking(clone!(@strong data => move || {
+        let mut drivers_found_array: Vec<String> = Vec::new();
         println!("Parsing Downloaded driver DB...");
         let res: serde_json::Value = serde_json::from_str(&data).expect("Unable to parse");
         if let serde_json::Value::Array(drivers) = &res["drivers"] {
@@ -137,14 +139,14 @@ pub fn build_ui(app: &adw::Application) {
                 let _ = cmd!("chmod", "+x", "/tmp/run-pkdm-detect.sh").run();
                 let result = cmd!("/tmp/run-pkdm-detect.sh").run();
                 if result.is_ok() {
-                    println!("{}", driver["driver"])
+                    drivers_found_array.push((driver["driver"].as_str().to_owned().unwrap()).to_string())
                 }
             }
         }
-        // drive_hws_sender
-        //     .send_blocking(ubuntu_drivers_list_utf8)
-        //     .expect("channel needs to be open.")
-    });
+        drive_hws_sender
+             .send_blocking(drivers_found_array)
+             .expect("channel needs to be open.")
+    }));
 
     window.present();
 
@@ -152,7 +154,7 @@ pub fn build_ui(app: &adw::Application) {
     // The main loop executes the asynchronous block
     drive_hws_main_context.spawn_local(clone!(@weak content_box, @weak loading_box => async move {
         while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
-            get_drivers(&content_box, &loading_box, drive_hws_state, &window);
+            get_drivers(&content_box, &loading_box, &drive_hws_state, &window);
         }
     }));
 }
@@ -184,7 +186,7 @@ fn driver_modify(
 fn get_drivers(
     main_window: &gtk::Box,
     loading_box: &gtk::Box,
-    ubuntu_drivers_list_utf8: String,
+    driver_found_array: &Vec<String>,
     window: &adw::ApplicationWindow,
 ) {
     let main_box = gtk::Box::builder()
@@ -210,31 +212,31 @@ fn get_drivers(
     let mut driver_array: Vec<DriverPackage> = Vec::new();
     let mut device_groups: HashMap<String, Vec<DriverPackage>> = HashMap::new();
 
-    for ubuntu_driver in ubuntu_drivers_list_utf8.lines() {
-        let ubuntu_driver_string = ubuntu_driver.to_string();
+    for found_driver in driver_found_array.iter() {
+        let found_driver_string = found_driver.to_string();
         let command_version_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
-            .args(["version", ubuntu_driver])
+            .args(["version", found_driver])
             .output()
             .unwrap();
         let command_description_label =
             Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
-                .args(["description", ubuntu_driver])
+                .args(["description", found_driver])
                 .output()
                 .unwrap();
         let command_device_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
-            .args(["device", ubuntu_driver])
+            .args(["device", found_driver])
             .output()
             .unwrap();
         let command_icon_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
-            .args(["icon", ubuntu_driver])
+            .args(["icon", found_driver])
             .output()
             .unwrap();
         let command_safe_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
-            .args(["safe", ubuntu_driver])
+            .args(["safe", found_driver])
             .output()
             .unwrap();
-        let ubuntu_driver_package = DriverPackage {
-            driver: ubuntu_driver_string,
+        let found_driver_package = DriverPackage {
+            driver: found_driver_string,
             version: String::from_utf8(command_version_label.stdout)
                 .unwrap()
                 .trim()
@@ -257,7 +259,7 @@ fn get_drivers(
                 .parse()
                 .unwrap(),
         };
-        driver_array.push(ubuntu_driver_package);
+        driver_array.push(found_driver_package);
         driver_array.sort_by(|a, b| b.cmp(a))
     }
 
