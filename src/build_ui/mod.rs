@@ -1,3 +1,5 @@
+use std::path::Path;
+use std::fs;
 use crate::config::*;
 use crate::save_window_size::save_window_size;
 use crate::DriverPackage;
@@ -12,7 +14,11 @@ use std::error::Error;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::process::Command;
+
 use users::*;
+
+use serde_json::json;
+use serde_json::Value;
 
 pub fn build_ui(app: &adw::Application) {
     gtk::glib::set_prgname(Some(APP_NAME));
@@ -118,16 +124,26 @@ pub fn build_ui(app: &adw::Application) {
     let drive_hws_sender = drive_hws_sender.clone();
     // The long running operation runs now in a separate thread
     gio::spawn_blocking(move || {
-        println!("Checking HW paramter script for available drivers:\n");
-        let ubuntu_drivers_list_cli =
-            Command::new("/usr/lib/pika/drivers/generate_driver_definitions.sh")
-                .output()
-                .expect("failed to execute process");
-
-        let ubuntu_drivers_list_utf8 = String::from_utf8(ubuntu_drivers_list_cli.stdout).unwrap_or_default();
-        drive_hws_sender
-            .send_blocking(ubuntu_drivers_list_utf8)
-            .expect("channel needs to be open.")
+        println!("Downloading driver DB...");
+        let data =  reqwest::blocking::get("https://raw.githubusercontent.com/PikaOS-Linux/pkg-pika-drivers/main/driver-db.json").unwrap().text().unwrap();
+        println!("Parsing Downloaded driver DB...");
+        let res: serde_json::Value = serde_json::from_str(&data).expect("Unable to parse");
+        if let serde_json::Value::Array(drivers) = &res["drivers"] {
+            for driver in drivers {
+                if Path::new("/tmp/run-pkdm-detect.sh").exists() {
+                    fs::remove_file("/tmp/run-pkdm-detect.sh").expect("Bad permissions on /tmp/pika-installer-gtk4-target-manual.txt");
+                }
+                fs::write("/tmp/run-pkdm-detect.sh", "#! /bin/bash\nset -e\n".to_owned() + driver["detection"].as_str().to_owned().unwrap()).expect("Unable to write file");
+                let _ = cmd!("chmod", "+x", "/tmp/run-pkdm-detect.sh").run();
+                let result = cmd!("/tmp/run-pkdm-detect.sh").run();
+                if result.is_ok() {
+                    println!("{}", driver["driver"])
+                }
+            }
+        }
+        // drive_hws_sender
+        //     .send_blocking(ubuntu_drivers_list_utf8)
+        //     .expect("channel needs to be open.")
     });
 
     window.present();

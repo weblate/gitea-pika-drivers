@@ -1,100 +1,100 @@
 {
-  "drivers": {
-    "pika-rocm-meta": {
+  "drivers": [
+    {
       "driver": "pika-rocm-meta",
       "icon": "amd",
       "experimental": false,
       "detection": "inxi -G | grep driver | grep -i amdgpu"
     },
-    "vulkan-amdgpu-pro": {
+    {
       "driver": "vulkan-amdgpu-pro",
       "icon": "amd",
       "experimental": false,
       "detection": "inxi -G | grep driver | grep -i amdgpu"
     },
-    "amf-amdgpu-pro": {
+    {
       "driver": "amf-amdgpu-pro",
       "icon": "amd",
       "experimental": false,
       "detection": "inxi -G | grep driver | grep -i amdgpu"
     },
-    "amdvlk": {
+    {
       "driver": "amdvlk",
       "icon": "amd",
       "experimental": false,
       "detection": "inxi -G | grep driver | grep -i amdgpu"
     },
-    "opencl-legacy-amdgpu-pro-icd": {
+    {
       "driver": "opencl-legacy-amdgpu-pro-icd",
       "icon": "amd",
       "experimental": false,
       "detection": "inxi -G | grep driver | grep -i amdgpu"
     },
-    "amdgpu-pro-oglp": {
+    {
       "driver": "amdgpu-pro-oglp",
       "icon": "amd",
       "experimental": false,
       "detection": "inxi -G | grep driver | grep -i amdgpu"
     },
-    "nvidia-driver-525": {
+    {
       "driver": "nvidia-driver-525",
       "icon": "nvidia",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
-    "nvidia-driver-525-open": {
+    {
       "driver": "nvidia-driver-525-open",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
-    "nvidia-driver-535": {
+    {
       "driver": "nvidia-driver-535",
       "icon": "nvidia",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
-    "nvidia-driver-535-open": {
+    {
       "driver": "nvidia-driver-535-open",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
-    "nvidia-driver-545": {
+    {
       "driver": "nvidia-driver-545",
       "icon": "nvidia",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
-    "nvidia-driver-545-open": {
+    {
       "driver": "nvidia-driver-545-open",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
-    "nvidia-driver-550": {
+    {
       "driver": "nvidia-driver-550",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
-    "nvidia-driver-550-open": {
+    {
       "driver": "nvidia-driver-550-open",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
-    "xone-dkms": {
+    {
       "driver": "xone-dkms",
       "icon": "input-gaming",
       "experimental": false,
       "detection": "lsusb | grep -i xbox"
     },
-    "intel-gpu-compute": {
+    {
       "driver": "intel-gpu-compute",
       "icon": "intel",
       "experimental": false,
       "detection": "inxi -G | grep driver | grep -i intel"
     }
-  }
+  ]
 }
