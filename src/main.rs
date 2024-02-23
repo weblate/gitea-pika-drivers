@@ -17,6 +17,7 @@ pub struct DriverPackage {
     description: String,
     icon: String,
     experimental: bool,
+    removeble: bool,
 }
 
 use build_ui::build_ui;

@@ -142,7 +142,7 @@ pub fn build_ui(app: &adw::Application) {
                     if Path::new("/tmp/run-pkdm-detect.sh").exists() {
                         fs::remove_file("/tmp/run-pkdm-detect.sh").expect("Bad permissions on /tmp/pika-installer-gtk4-target-manual.txt");
                     }
-                    fs::write("/tmp/run-pkdm-detect.sh", "#! /bin/bash\nset -e\n".to_owned() + driver["detection"].as_str().to_owned().unwrap()).expect("Unable to write file");
+                    fs::write("/tmp/run-pkdm-detect.sh", "#! /bin/bash\nset -e\nexport LANG=en_US.UTF-8\n".to_owned() + driver["detection"].as_str().to_owned().unwrap()).expect("Unable to write file");
                     let _ = cmd!("chmod", "+x", "/tmp/run-pkdm-detect.sh").read();
                     let result = cmd!("/tmp/run-pkdm-detect.sh").stdout_capture().read();
                     if result.is_ok() {
@@ -150,6 +150,7 @@ pub fn build_ui(app: &adw::Application) {
                         let driver_device = result.unwrap();
                         let driver_icon = driver["icon"].as_str().to_owned().unwrap().to_string();
                         let driver_experimental = driver["experimental"].as_bool().unwrap();
+                        let driver_removeble= driver["removable"].as_bool().unwrap();
                         let command_version_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
                             .args(["version", &driver_name])
                             .output()
@@ -171,6 +172,7 @@ pub fn build_ui(app: &adw::Application) {
                                 .to_string(),
                             icon: driver_icon,
                             experimental: driver_experimental,
+                            removeble: driver_removeble,
                         };
                         driver_package_array.push(found_driver_package)
                     }
@@ -199,8 +201,8 @@ pub fn build_ui(app: &adw::Application) {
         println!("Network Error!");
         let loading_no_internet_box_text = adw::StatusPage::builder()
             .icon_name("network-cellular-offline")
-            .title(t!("first_setup_gameutils_box_text_title"))
-            .description(t!("first_setup_gameutils_box_text_description"))
+            .title(t!("loading_no_internet_box_text_title"))
+            .description(t!("loading_no_internet_box_text_description"))
             .build();
         loading_no_internet_box_text.add_css_class("compact");
 
@@ -275,7 +277,7 @@ fn get_drivers(
         });
         for (device, group) in device_groups {
             let device_label = gtk::Label::builder()
-                .label("Device: ".to_owned() + &device)
+                .label(t!("device_label_label_prefix").to_owned().to_string() + &device)
                 .halign(gtk::Align::Center)
                 .valign(gtk::Align::Center)
                 .build();
@@ -318,8 +320,8 @@ fn get_drivers(
                     .margin_top(5)
                     .margin_bottom(5)
                     .valign(gtk::Align::Center)
-                    .label("Install")
-                    .tooltip_text("Install the driver package.")
+                    .label(t!("driver_install_button_label"))
+                    .tooltip_text(t!("driver_install_button_tooltip_text"))
                     .sensitive(false)
                     .build();
                 driver_install_button.add_css_class("suggested-action");
@@ -328,8 +330,8 @@ fn get_drivers(
                     .margin_top(5)
                     .margin_bottom(5)
                     .valign(gtk::Align::Center)
-                    .label("Uninstall")
-                    .tooltip_text("Uninstall the driver package.")
+                    .label(t!("driver_remove_button_label"))
+                    .tooltip_text(t!("driver_remove_button_tooltip_text"))
                     .sensitive(false)
                     .build();
                 let driver_action_box = gtk::Box::builder().homogeneous(true).build();
@@ -338,7 +340,7 @@ fn get_drivers(
                 if driver.clone().experimental == true {
                     driver_expander_row.set_title(
                         &(driver.clone().driver
-                            + " (WARNING: THIS DRIVER IS EXPERMINTAL USE AT YOUR OWN RISK!)"),
+                            + &t!("driver_expander_row_title_suffix").to_string()),
                     );
                     driver_expander_row.add_css_class("midLabelWARN");
                 } else {
@@ -358,7 +360,7 @@ fn get_drivers(
                     .unwrap();
                 if command_installed_status.status.success() {
                     driver_install_button.set_sensitive(false);
-                    if !driver.clone().driver.contains("mesa") {
+                    if driver.clone().removeble == false {
                         driver_remove_button.set_sensitive(true);
                     }
                 } else {
