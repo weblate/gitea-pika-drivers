@@ -4,19 +4,37 @@
       "driver": "mesa-stable",
       "icon": "video-display",
       "experimental": false,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -vi nvidia"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
       "driver": "mesa-hybrid",
       "icon": "video-display",
       "experimental": false,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -vi nvidia"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
       "driver": "mesa-git",
       "icon": "video-display",
       "experimental": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -vi nvidia"
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
+    },
+    {
+      "driver": "mesa-stable",
+      "icon": "video-display",
+      "experimental": false,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
+    },
+    {
+      "driver": "mesa-hybrid",
+      "icon": "video-display",
+      "experimental": false,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
+    },
+    {
+      "driver": "mesa-git",
+      "icon": "video-display",
+      "experimental": true,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
     },
     {
       "driver": "pika-rocm-meta",
