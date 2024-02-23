@@ -18,9 +18,9 @@ use std::process::Command;
 use users::*;
 
 pub fn build_ui(app: &adw::Application) {
-    gtk::glib::set_prgname(Some(APP_NAME));
-    glib::set_application_name(APP_NAME);
-    let glib_settings = gio::Settings::new("com.github.pikaos-linux.pikadrivers");
+    gtk::glib::set_prgname(Some(t!("app_name").to_string()));
+    glib::set_application_name(&t!("app_name").to_string());
+    let glib_settings = gio::Settings::new(APP_ID);
 
     let content_box = gtk::Box::builder()
         .orientation(Orientation::Vertical)
@@ -59,7 +59,7 @@ pub fn build_ui(app: &adw::Application) {
         .build();
 
     let loading_label = gtk::Label::builder()
-        .label("Scanning for drivers...")
+        .label(t!("loading_label_label"))
         .margin_top(20)
         .margin_bottom(20)
         .margin_start(20)
@@ -75,13 +75,13 @@ pub fn build_ui(app: &adw::Application) {
     loading_box.append(&loading_label);
 
     let window = adw::ApplicationWindow::builder()
-        .title(APP_NAME)
+        .title(t!("app_name"))
         .application(app)
         .content(&content_box)
         .icon_name(APP_ICON)
         .default_width(glib_settings.int("window-width"))
         .default_height(glib_settings.int("window-height"))
-        .width_request(900)
+        .width_request(950)
         .height_request(500)
         .startup_id(APP_ID)
         .hide_on_close(true)
@@ -99,16 +99,15 @@ pub fn build_ui(app: &adw::Application) {
 
     let credits_window = adw::AboutWindow::builder()
         .application_icon(APP_ICON)
-        .application_name(APP_NAME)
+        .application_name(t!("app_name"))
         .transient_for(&window)
         .version(VERSION)
         .hide_on_close(true)
-        .developer_name(APP_DEV)
+        .developer_name(t!("app_dev"))
         .issue_url(APP_GITHUB.to_owned() + "/issues")
         .build();
 
     content_box.append(&window_title_bar);
-    content_box.append(&loading_box);
 
     window_title_bar.pack_end(&credits_button.clone());
 
@@ -119,76 +118,95 @@ pub fn build_ui(app: &adw::Application) {
         .connect_clicked(clone!(@weak credits_button => move |_| credits_window.present()));
 
     println!("Downloading driver DB...");
-    let data = reqwest::blocking::get(DRIVER_DB_JSON_URL)
-        .unwrap()
-        .text()
-        .unwrap();
+    let check_internet_connection_cli = Command::new("ping")
+        .arg("ppa.pika-os.com")
+        .arg("-c 1")
+        .output()
+        .expect("failed to execute process");
 
-    let (drive_hws_sender, drive_hws_receiver) = async_channel::unbounded();
-    let drive_hws_sender = drive_hws_sender.clone();
-    // The long running operation runs now in a separate thread
-    gio::spawn_blocking(clone!(@strong data => move || {
-        let mut driver_package_array: Vec<DriverPackage> = Vec::new();
-        println!("Parsing Downloaded driver DB...");
-        let res: serde_json::Value = serde_json::from_str(&data).expect("Unable to parse");
-        if let serde_json::Value::Array(drivers) = &res["drivers"] {
-            for driver in drivers {
-                if Path::new("/tmp/run-pkdm-detect.sh").exists() {
-                    fs::remove_file("/tmp/run-pkdm-detect.sh").expect("Bad permissions on /tmp/pika-installer-gtk4-target-manual.txt");
-                }
-                fs::write("/tmp/run-pkdm-detect.sh", "#! /bin/bash\nset -e\n".to_owned() + driver["detection"].as_str().to_owned().unwrap()).expect("Unable to write file");
-                let _ = cmd!("chmod", "+x", "/tmp/run-pkdm-detect.sh").read();
-                let result = cmd!("/tmp/run-pkdm-detect.sh").stdout_capture().read();
-                if result.is_ok() {
-                    let driver_name = driver["driver"].as_str().to_owned().unwrap().to_string();
-                    let driver_device = result.unwrap();
-                    let driver_icon = driver["icon"].as_str().to_owned().unwrap().to_string();
-                    let driver_experimental = driver["experimental"].as_bool().unwrap();
-                    let command_version_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
-                        .args(["version", &driver_name])
-                        .output()
-                        .unwrap();
-                    let command_description_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
-                        .args(["description", &driver_name])
-                        .output()
-                        .unwrap();
-                    let found_driver_package = DriverPackage {
-                        driver: driver_name,
-                        version: String::from_utf8(command_version_label.stdout)
-                            .unwrap()
-                            .trim()
-                            .to_string(),
-                        device: driver_device,
-                        description: String::from_utf8(command_description_label.stdout)
-                            .unwrap()
-                            .trim()
-                            .to_string(),
-                        icon: driver_icon,
-                        experimental: driver_experimental,
-                    };
-                    driver_package_array.push(found_driver_package)
+    if check_internet_connection_cli.status.success() {
+        content_box.append(&loading_box);
+        let data = reqwest::blocking::get(DRIVER_DB_JSON_URL)
+            .unwrap()
+            .text()
+            .unwrap();
+        let (drive_hws_sender, drive_hws_receiver) = async_channel::unbounded();
+        let drive_hws_sender = drive_hws_sender.clone();
+        // The long running operation runs now in a separate thread
+        gio::spawn_blocking(clone!(@strong data => move || {
+            let mut driver_package_array: Vec<DriverPackage> = Vec::new();
+            println!("Parsing Downloaded driver DB...");
+            let res: serde_json::Value = serde_json::from_str(&data).expect("Unable to parse");
+            if let serde_json::Value::Array(drivers) = &res["drivers"] {
+                for driver in drivers {
+                    if Path::new("/tmp/run-pkdm-detect.sh").exists() {
+                        fs::remove_file("/tmp/run-pkdm-detect.sh").expect("Bad permissions on /tmp/pika-installer-gtk4-target-manual.txt");
+                    }
+                    fs::write("/tmp/run-pkdm-detect.sh", "#! /bin/bash\nset -e\n".to_owned() + driver["detection"].as_str().to_owned().unwrap()).expect("Unable to write file");
+                    let _ = cmd!("chmod", "+x", "/tmp/run-pkdm-detect.sh").read();
+                    let result = cmd!("/tmp/run-pkdm-detect.sh").stdout_capture().read();
+                    if result.is_ok() {
+                        let driver_name = driver["driver"].as_str().to_owned().unwrap().to_string();
+                        let driver_device = result.unwrap();
+                        let driver_icon = driver["icon"].as_str().to_owned().unwrap().to_string();
+                        let driver_experimental = driver["experimental"].as_bool().unwrap();
+                        let command_version_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+                            .args(["version", &driver_name])
+                            .output()
+                            .unwrap();
+                        let command_description_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+                            .args(["description", &driver_name])
+                            .output()
+                            .unwrap();
+                        let found_driver_package = DriverPackage {
+                            driver: driver_name,
+                            version: String::from_utf8(command_version_label.stdout)
+                                .unwrap()
+                                .trim()
+                                .to_string(),
+                            device: driver_device,
+                            description: String::from_utf8(command_description_label.stdout)
+                                .unwrap()
+                                .trim()
+                                .to_string(),
+                            icon: driver_icon,
+                            experimental: driver_experimental,
+                        };
+                        driver_package_array.push(found_driver_package)
+                    }
                 }
             }
-        }
-        //driver_array.sort_by(|a, b| b.cmp(a))
-        driver_package_array.sort_by(|a, b| b.cmp(a));
+            //driver_array.sort_by(|a, b| b.cmp(a))
+            driver_package_array.sort_by(|a, b| b.cmp(a));
 
-        drive_hws_sender
-             .send_blocking(driver_package_array)
-             .expect("channel needs to be open.")
-    }));
+            drive_hws_sender
+                 .send_blocking(driver_package_array)
+                 .expect("channel needs to be open.")
+        }));
 
-    window.present();
+        window.present();
 
-    let drive_hws_main_context = MainContext::default();
-    // The main loop executes the asynchronous block
-    drive_hws_main_context.spawn_local(
-        clone!(@weak content_box, @weak loading_box, @strong data => async move {
-            while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
-                get_drivers(&content_box, &loading_box, drive_hws_state, &window);
-            }
-        }),
-    );
+        let drive_hws_main_context = MainContext::default();
+        // The main loop executes the asynchronous block
+        drive_hws_main_context.spawn_local(
+            clone!(@weak content_box, @weak loading_box, @strong data => async move {
+                while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
+                    get_drivers(&content_box, &loading_box, drive_hws_state, &window);
+                }
+            }),
+        );
+    } else {
+        println!("Network Error!");
+        let loading_no_internet_box_text = adw::StatusPage::builder()
+            .icon_name("network-cellular-offline")
+            .title(t!("first_setup_gameutils_box_text_title"))
+            .description(t!("first_setup_gameutils_box_text_description"))
+            .build();
+        loading_no_internet_box_text.add_css_class("compact");
+
+        content_box.append(&loading_no_internet_box_text);
+        window.present();
+    }
 }
 
 const DRIVER_MODIFY_PROG: &str = r###"
@@ -226,12 +244,17 @@ fn get_drivers(
         .margin_bottom(20)
         .margin_start(20)
         .margin_end(20)
+        .hexpand(true)
+        .vexpand(true)
         .orientation(Orientation::Vertical)
+        .halign(gtk::Align::Center)
+        .valign(gtk::Align::Center)
         .build();
 
     let main_scroll = gtk::ScrolledWindow::builder()
         .max_content_width(650)
         .min_content_width(300)
+        .hscrollbar_policy(gtk::PolicyType::Never)
         .child(&main_box)
         .build();
 
@@ -255,8 +278,6 @@ fn get_drivers(
                 .label("Device: ".to_owned() + &device)
                 .halign(gtk::Align::Center)
                 .valign(gtk::Align::Center)
-                .wrap(true)
-                .wrap_mode(gtk::pango::WrapMode::Word)
                 .build();
             device_label.add_css_class("deviceLabel");
 
