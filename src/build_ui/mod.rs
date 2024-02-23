@@ -393,8 +393,10 @@ fn get_drivers(
                     .height_request(200)
                     .heading(t!("driver_install_dialog_heading"))
                     .build();
-                driver_install_dialog
-                    .add_response("driver_install_dialog_ok", &t!("driver_install_dialog_ok_label").to_string());
+                driver_install_dialog.add_response(
+                    "driver_install_dialog_ok",
+                    &t!("driver_install_dialog_ok_label").to_string(),
+                );
                 driver_install_dialog.add_response(
                     "driver_install_dialog_reboot",
                     &t!("driver_install_dialog_reboot_label").to_string(),
