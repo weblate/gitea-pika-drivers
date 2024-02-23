@@ -360,7 +360,7 @@ fn get_drivers(
                     .unwrap();
                 if command_installed_status.status.success() {
                     driver_install_button.set_sensitive(false);
-                    if driver.clone().removeble == false {
+                    if driver.clone().removeble == true {
                         driver_remove_button.set_sensitive(true);
                     }
                 } else {
@@ -391,13 +391,13 @@ fn get_drivers(
                     .extra_child(&driver_install_log_terminal_scroll)
                     .width_request(400)
                     .height_request(200)
-                    .heading("driver_install_dialog_heading")
+                    .heading(t!("driver_install_dialog_heading"))
                     .build();
                 driver_install_dialog
-                    .add_response("driver_install_dialog_ok", "driver_install_dialog_ok_label");
+                    .add_response("driver_install_dialog_ok", &t!("driver_install_dialog_ok_label").to_string());
                 driver_install_dialog.add_response(
                     "driver_install_dialog_reboot",
-                    "driver_install_dialog_reboot_label",
+                    &t!("driver_install_dialog_reboot_label").to_string(),
                 );
                 driver_install_dialog.set_response_appearance(
                     "driver_install_dialog_reboot",
@@ -501,8 +501,8 @@ fn get_drivers(
     } else {
         let window_no_drivers_box_text = adw::StatusPage::builder()
             .icon_name("face-cool")
-            .title(t!("first_setup_gameutils_box_text_title"))
-            .description(t!("first_setup_gameutils_box_text_description"))
+            .title(t!("window_no_drivers_box_text_title"))
+            .description(t!("window_no_drivers_box_text_description"))
             .build();
         window_no_drivers_box_text.add_css_class("compact");
 

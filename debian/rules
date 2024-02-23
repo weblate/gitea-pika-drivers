@@ -3,3 +3,18 @@
 %:
 	dh ${@}
 
+override_dh_auto_install:
+	/root/.cargo/bin/cargo fetch
+	/root/.cargo/bin/cargo build --release
+	mkdir -p debian/pika-drivers/usr/bin/
+	cp -vf target/release/pika-drivers debian/pika-drivers/usr/bin/
+	chmod 755 debian/pika-drivers/usr/bin/pika-drivers
+	mkdir -p debian/pika-drivers/usr/lib/pika/drivers/
+	mkdir -p debian/pika-drivers/usr/share/glib-2.0/schemas/
+	cp data/*.sh debian/pika-drivers/usr/lib/pika/drivers/
+	cp data/*.xml debian/pika-drivers/usr/share/glib-2.0/schemas/
+	chmod 755 debian/pika-drivers/usr/lib/pika/drivers/*.sh
+	mkdir -p debian/pika-drivers/usr/share/applications
+	mkdir -p debian/pika-drivers/usr/share/icons/hicolor/scalable/apps
+	cp -vf data/com.github.pikaos-linux.pikadrivers.svg debian/pika-drivers/usr/share/icons/hicolor/scalable/apps/
+	cp -vf data/com.github.pikaos-linux.pikadrivers.desktop  debian/pika-drivers/usr/share/applications/
