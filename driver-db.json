@@ -1,132 +1,154 @@
 {
   "drivers": [
     {
+      "id": 0,
       "driver": "mesa-stable",
       "icon": "video-display",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 1,
       "driver": "mesa-hybrid",
       "icon": "video-display",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 2,
       "driver": "mesa-git",
       "icon": "video-display",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 3,
       "driver": "mesa-stable",
       "icon": "video-display",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
     },
     {
+      "id": 4,
       "driver": "mesa-hybrid",
       "icon": "video-display",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
     },
     {
+      "id": 5,
       "driver": "mesa-git",
       "icon": "video-display",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
     },
     {
+      "id": 6,
       "driver": "pika-rocm-meta",
       "icon": "amd",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 7,
       "driver": "vulkan-amdgpu-pro",
       "icon": "amd",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 8,
       "driver": "amf-amdgpu-pro",
       "icon": "amd",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 9,
       "driver": "amdvlk",
       "icon": "amd",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 10,
       "driver": "opencl-legacy-amdgpu-pro-icd",
       "icon": "amd",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 11,
       "driver": "amdgpu-pro-oglp",
       "icon": "amd",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i amd"
     },
     {
+      "id": 12,
       "driver": "nvidia-driver-525",
       "icon": "nvidia",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
     {
+      "id": 13,
       "driver": "nvidia-driver-525-open",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
     {
+      "id": 14,
       "driver": "nvidia-driver-535",
       "icon": "nvidia",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
     {
+      "id": 15,
       "driver": "nvidia-driver-535-open",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
     {
+      "id": 16,
       "driver": "nvidia-driver-545",
       "icon": "nvidia",
       "experimental": false,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
     {
+      "id": 17,
       "driver": "nvidia-driver-545-open",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
     {
+      "id": 18,
       "driver": "nvidia-driver-550",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
     {
+      "id": 19,
       "driver": "nvidia-driver-550-open",
       "icon": "nvidia",
       "experimental": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia | cut -d: -f 4"
     },
     {
+      "id": 20,
       "driver": "xone-dkms",
       "icon": "input-gaming",
       "experimental": false,
       "detection": "lsusb | grep -i xbox"
     },
     {
+      "id": 21,
       "driver": "intel-gpu-compute",
       "icon": "intel",
       "experimental": false,
