@@ -22,16 +22,6 @@ use serde_json::json;
 use serde_json::Value;
 use serde::{Serialize, Deserialize};
 
-#[derive(Deserialize)]
-struct Ask {
-    id: f64,
-    driver: String,
-    icon: String,
-    experimental: bool,
-    detection: String
-}
-
-
 pub fn build_ui(app: &adw::Application) {
     gtk::glib::set_prgname(Some(APP_NAME));
     glib::set_application_name(APP_NAME);
@@ -139,7 +129,7 @@ pub fn build_ui(app: &adw::Application) {
     let drive_hws_sender = drive_hws_sender.clone();
     // The long running operation runs now in a separate thread
     gio::spawn_blocking(clone!(@strong data => move || {
-        let mut found_driver_ids_array: Vec<i64> = Vec::new();
+        let mut driver_package_array: Vec<DriverPackage> = Vec::new();
         println!("Parsing Downloaded driver DB...");
         let res: serde_json::Value = serde_json::from_str(&data).expect("Unable to parse");
         if let serde_json::Value::Array(drivers) = &res["drivers"] {
@@ -148,15 +138,44 @@ pub fn build_ui(app: &adw::Application) {
                     fs::remove_file("/tmp/run-pkdm-detect.sh").expect("Bad permissions on /tmp/pika-installer-gtk4-target-manual.txt");
                 }
                 fs::write("/tmp/run-pkdm-detect.sh", "#! /bin/bash\nset -e\n".to_owned() + driver["detection"].as_str().to_owned().unwrap()).expect("Unable to write file");
-                let _ = cmd!("chmod", "+x", "/tmp/run-pkdm-detect.sh").run();
-                let result = cmd!("/tmp/run-pkdm-detect.sh").run();
+                let _ = cmd!("chmod", "+x", "/tmp/run-pkdm-detect.sh").read();
+                let result = cmd!("/tmp/run-pkdm-detect.sh").stdout_capture().read();
                 if result.is_ok() {
-                    found_driver_ids_array.push(driver["id"].as_i64().unwrap())
+                    let driver_name = driver["driver"].as_str().to_owned().unwrap().to_string();
+                    let driver_device = result.unwrap();
+                    let driver_icon = driver["icon"].as_str().to_owned().unwrap().to_string();
+                    let driver_experimental = driver["experimental"].as_bool().unwrap();
+                    let command_version_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+                        .args(["version", &driver_name])
+                        .output()
+                        .unwrap();
+                    let command_description_label = Command::new("/usr/lib/pika/drivers/generate_package_info.sh")
+                        .args(["description", &driver_name])
+                        .output()
+                        .unwrap();
+                    let found_driver_package = DriverPackage {
+                        driver: driver_name,
+                        version: String::from_utf8(command_version_label.stdout)
+                            .unwrap()
+                            .trim()
+                            .to_string(),
+                        device: driver_device,
+                        description: String::from_utf8(command_description_label.stdout)
+                            .unwrap()
+                            .trim()
+                            .to_string(),
+                        icon: driver_icon,
+                        experimental: driver_experimental,
+                    };
+                    driver_package_array.push(found_driver_package)
                 }
             }
         }
+        //driver_array.sort_by(|a, b| b.cmp(a))
+        driver_package_array.sort_by(|a, b| b.cmp(a));
+
         drive_hws_sender
-             .send_blocking(found_driver_ids_array)
+             .send_blocking(driver_package_array)
              .expect("channel needs to be open.")
     }));
 
@@ -166,7 +185,7 @@ pub fn build_ui(app: &adw::Application) {
     // The main loop executes the asynchronous block
     drive_hws_main_context.spawn_local(clone!(@weak content_box, @weak loading_box, @strong data => async move {
         while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
-            get_drivers(&content_box, &loading_box, &drive_hws_state, &window, &data);
+            get_drivers(&content_box, &loading_box, drive_hws_state, &window, &data);
         }
     }));
 }
@@ -198,7 +217,7 @@ fn driver_modify(
 fn get_drivers(
     main_window: &gtk::Box,
     loading_box: &gtk::Box,
-    found_driver_ids_array: &Vec<i64>,
+    driver_array: Vec<DriverPackage>,
     window: &adw::ApplicationWindow,
     json_data: &String
 ) {
@@ -222,8 +241,243 @@ fn get_drivers(
 
     window_box.append(&main_scroll);
 
-    let mut driver_array: Vec<DriverPackage> = Vec::new();
     let mut device_groups: HashMap<String, Vec<DriverPackage>> = HashMap::new();
+
+    if !driver_array.is_empty() {
+        driver_array.into_iter().for_each(|driver_package| {
+            let group = device_groups
+                .entry(driver_package.clone().device.to_owned())
+                .or_insert(vec![]);
+            group.push(driver_package);
+        });
+        for (device, group) in device_groups {
+            let device_label = gtk::Label::builder()
+                .label("Device: ".to_owned() + &device)
+                .halign(gtk::Align::Center)
+                .valign(gtk::Align::Center)
+                .build();
+            device_label.add_css_class("deviceLabel");
+
+            main_box.append(&device_label);
+
+            let drivers_list_row = gtk::ListBox::builder()
+                .margin_top(20)
+                .margin_bottom(20)
+                .margin_start(20)
+                .margin_end(20)
+                .vexpand(true)
+                .hexpand(true)
+                .build();
+            drivers_list_row.add_css_class("boxed-list");
+
+            main_box.append(&drivers_list_row);
+
+            for driver in group.iter() {
+
+                let (log_loop_sender, log_loop_receiver) = async_channel::unbounded();
+                let log_loop_sender: async_channel::Sender<String> = log_loop_sender.clone();
+
+                let (log_status_loop_sender, log_status_loop_receiver) = async_channel::unbounded();
+                let log_status_loop_sender: async_channel::Sender<bool> = log_status_loop_sender.clone();
+
+                let driver_package_ind = driver.driver.to_owned();
+                let driver_expander_row = adw::ExpanderRow::new();
+                let driver_icon = gtk::Image::builder()
+                    .icon_name(driver.clone().icon)
+                    .pixel_size(32)
+                    .build();
+                let driver_description_label = gtk::Label::builder()
+                    .label(driver.clone().description)
+                    .build();
+                let driver_content_row = adw::ActionRow::builder().build();
+                let driver_install_button = gtk::Button::builder()
+                    .margin_start(5)
+                    .margin_top(5)
+                    .margin_bottom(5)
+                    .valign(gtk::Align::Center)
+                    .label("Install")
+                    .tooltip_text("Install the driver package.")
+                    .sensitive(false)
+                    .build();
+                driver_install_button.add_css_class("suggested-action");
+                let driver_remove_button = gtk::Button::builder()
+                    .margin_end(5)
+                    .margin_top(5)
+                    .margin_bottom(5)
+                    .valign(gtk::Align::Center)
+                    .label("Uninstall")
+                    .tooltip_text("Uninstall the driver package.")
+                    .sensitive(false)
+                    .build();
+                let driver_action_box = gtk::Box::builder().homogeneous(true).build();
+                driver_remove_button.add_css_class("destructive-action");
+                driver_expander_row.add_prefix(&driver_icon);
+                if driver.clone().experimental == true {
+                    driver_expander_row.set_title(
+                        &(driver.clone().driver
+                            + " (WARNING: THIS DRIVER IS EXPERMINTAL USE AT YOUR OWN RISK!)"),
+                    );
+                    driver_expander_row.add_css_class("midLabelWARN");
+                } else {
+                    driver_expander_row.set_title(&driver.clone().driver);
+                }
+                driver_expander_row.set_subtitle(&driver.clone().version);
+                //
+                driver_content_row.add_prefix(&driver_description_label);
+                driver_action_box.append(&driver_remove_button);
+                driver_action_box.append(&driver_install_button);
+                driver_content_row.add_suffix(&driver_action_box);
+                driver_expander_row.add_row(&driver_content_row);
+                //
+                let command_installed_status = Command::new("dpkg")
+                    .args(["-s", &driver.clone().driver])
+                    .output()
+                    .unwrap();
+                if command_installed_status.status.success() {
+                    driver_install_button.set_sensitive(false);
+                    if !driver.clone().driver.contains("mesa") {
+                        driver_remove_button.set_sensitive(true);
+                    }
+                } else {
+                    driver_remove_button.set_sensitive(false);
+                    driver_install_button.set_sensitive(true);
+                }
+                //
+                let driver_install_log_terminal_buffer = gtk::TextBuffer::builder().build();
+
+                let driver_install_log_terminal = gtk::TextView::builder()
+                    .vexpand(true)
+                    .hexpand(true)
+                    .editable(false)
+                    .buffer(&driver_install_log_terminal_buffer)
+                    .build();
+
+                let driver_install_log_terminal_scroll = gtk::ScrolledWindow::builder()
+                    .width_request(400)
+                    .height_request(200)
+                    .vexpand(true)
+                    .hexpand(true)
+                    .child(&driver_install_log_terminal)
+                    .build();
+
+                let driver_install_dialog = adw::MessageDialog::builder()
+                    .transient_for(window)
+                    .hide_on_close(true)
+                    .extra_child(&driver_install_log_terminal_scroll)
+                    .width_request(400)
+                    .height_request(200)
+                    .heading("driver_install_dialog_heading")
+                    .build();
+                driver_install_dialog
+                    .add_response("driver_install_dialog_ok", "driver_install_dialog_ok_label");
+                driver_install_dialog
+                    .add_response("driver_install_dialog_reboot", "driver_install_dialog_reboot_label");
+                driver_install_dialog.set_response_appearance("driver_install_dialog_reboot", adw::ResponseAppearance::Suggested);
+                //
+
+                //
+                let log_loop_context = MainContext::default();
+                // The main loop executes the asynchronous block
+                log_loop_context.spawn_local(clone!(@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_receiver => async move {
+            while let Ok(state) = log_loop_receiver.recv().await {
+                driver_install_log_terminal_buffer.insert(&mut driver_install_log_terminal_buffer.end_iter(), &("\n".to_string() + &state))
+            }
+            }));
+
+                let log_status_loop_context = MainContext::default();
+                // The main loop executes the asynchronous block
+                log_status_loop_context.spawn_local(clone!(@weak driver_install_dialog, @strong log_status_loop_receiver => async move {
+                    while let Ok(state) = log_status_loop_receiver.recv().await {
+                        if state == true {
+                            driver_install_dialog.set_response_enabled("driver_install_dialog_ok", true);
+                            if get_current_username().unwrap() == "pikaos" {
+                                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", false);
+                            } else {
+                                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", true);
+                            }
+                            driver_install_dialog.set_body(&t!("driver_install_dialog_success_true"));
+                        } else {
+                            driver_install_dialog.set_response_enabled("driver_install_dialog_ok", true);
+                            driver_install_dialog.set_body(&t!("driver_install_dialog_success_false"));
+                            driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", false);
+                        }
+                    }
+            }));
+                //
+                driver_install_log_terminal_buffer.connect_changed(clone!(@weak driver_install_log_terminal, @weak driver_install_log_terminal_buffer,@weak driver_install_log_terminal_scroll => move |_|{
+               if driver_install_log_terminal_scroll.vadjustment().upper() - driver_install_log_terminal_scroll.vadjustment().value() > 100.0 {
+                    driver_install_log_terminal_scroll.vadjustment().set_value(driver_install_log_terminal_scroll.vadjustment().upper())
+                }
+            }));
+                //
+                driver_install_button.connect_clicked(clone!(@weak driver_install_log_terminal,@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind => move |_| {
+                driver_install_log_terminal_buffer.delete(&mut driver_install_log_terminal_buffer.bounds().0, &mut driver_install_log_terminal_buffer.bounds().1);
+                driver_install_dialog.set_response_enabled("driver_install_dialog_ok", false);
+                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", false);
+                driver_install_dialog.set_body("");
+                driver_install_dialog.choose(None::<&gio::Cancellable>, move |choice| {
+                if choice == "driver_install_dialog_reboot" {
+                        Command::new("systemctl")
+                        .arg("reboot")
+                        .spawn()
+                        .expect("systemctl reboot failed to start");
+                }
+                });
+                gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind => move || {
+                        let command = driver_modify(log_loop_sender, &driver_package_ind);
+                        match command {
+                            Ok(_) => {
+                                println!("Status: Driver modify Successful");
+                                log_status_loop_sender.send_blocking(true).expect("The channel needs to be open.");
+                            }
+                            Err(_) => {
+                                println!("Status: Driver modify Failed");
+                                log_status_loop_sender.send_blocking(false).expect("The channel needs to be open.");
+                            }
+                        }
+                }));
+            }));
+                driver_remove_button.connect_clicked(clone!(@weak driver_install_log_terminal,@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind  => move |_| {
+                driver_install_log_terminal_buffer.delete(&mut driver_install_log_terminal_buffer.bounds().0, &mut driver_install_log_terminal_buffer.bounds().1);
+                driver_install_dialog.set_response_enabled("driver_install_dialog_ok", false);
+                driver_install_dialog.set_response_enabled("driver_install_dialog_reboot", false);
+                driver_install_dialog.set_body("");
+                driver_install_dialog.choose(None::<&gio::Cancellable>, move |choice| {
+                if choice == "driver_install_dialog_reboot" {
+                        Command::new("systemctl")
+                        .arg("reboot")
+                        .spawn()
+                        .expect("systemctl reboot failed to start");
+                }
+                });
+                gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind => move || {
+                        let command = driver_modify(log_loop_sender, &driver_package_ind);
+                        match command {
+                            Ok(_) => {
+                                println!("Status: Driver modify Successful");
+                                log_status_loop_sender.send_blocking(true).expect("The channel needs to be open.");
+                            }
+                            Err(_) => {
+                                println!("Status: Driver modify Failed");
+                                log_status_loop_sender.send_blocking(false).expect("The channel needs to be open.");
+                            }
+                        }
+                }));
+            }));
+                //
+                drivers_list_row.append(&driver_expander_row);
+            }
+        }
+    } else {
+        let window_no_drivers_box_text = adw::StatusPage::builder()
+            .icon_name("face-cool")
+            .title(t!("first_setup_gameutils_box_text_title"))
+            .description(t!("first_setup_gameutils_box_text_description"))
+            .build();
+        window_no_drivers_box_text.add_css_class("compact");
+
+        window_box.append(&window_no_drivers_box_text);
+    }
 
     main_window.remove(loading_box);
     main_window.append(&window_box);
