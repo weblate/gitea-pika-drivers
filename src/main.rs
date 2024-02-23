@@ -6,14 +6,8 @@ use config::*;
 use adw::prelude::*;
 use adw::*;
 use gdk::Display;
-use glib::*;
-use gtk::prelude::*;
-use gtk::prelude::*;
 use gtk::*;
-use std::collections::HashMap;
 use std::env;
-use std::process::Command;
-use std::thread;
 
 #[derive(PartialEq, Debug, Eq, Hash, Clone, Ord, PartialOrd)]
 pub struct DriverPackage {

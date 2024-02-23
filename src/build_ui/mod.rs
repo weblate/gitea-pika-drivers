@@ -1,5 +1,3 @@
-use std::path::Path;
-use std::fs;
 use crate::config::*;
 use crate::save_window_size::save_window_size;
 use crate::DriverPackage;
@@ -7,20 +5,17 @@ use adw::glib::{clone, MainContext};
 use adw::prelude::*;
 use adw::{gio, glib};
 use duct::cmd;
-use gtk::prelude::{BoxExt, ButtonExt, FrameExt, GtkWindowExt, WidgetExt};
+use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, WidgetExt};
 use gtk::Orientation;
 use std::collections::HashMap;
 use std::error::Error;
+use std::fs;
 use std::io::BufRead;
 use std::io::BufReader;
-use std::ops::Index;
+use std::path::Path;
 use std::process::Command;
 
 use users::*;
-
-use serde_json::json;
-use serde_json::Value;
-use serde::{Serialize, Deserialize};
 
 pub fn build_ui(app: &adw::Application) {
     gtk::glib::set_prgname(Some(APP_NAME));
@@ -120,10 +115,14 @@ pub fn build_ui(app: &adw::Application) {
     window.connect_hide(clone!(@weak window => move |_| save_window_size(&window, &glib_settings)));
     window.connect_hide(clone!(@weak window => move |_| window.destroy()));
 
-    credits_button.connect_clicked(clone!(@weak credits_button => move |_| credits_window.present()));
+    credits_button
+        .connect_clicked(clone!(@weak credits_button => move |_| credits_window.present()));
 
     println!("Downloading driver DB...");
-    let data =  reqwest::blocking::get(DRIVER_DB_JSON_URL).unwrap().text().unwrap();
+    let data = reqwest::blocking::get(DRIVER_DB_JSON_URL)
+        .unwrap()
+        .text()
+        .unwrap();
 
     let (drive_hws_sender, drive_hws_receiver) = async_channel::unbounded();
     let drive_hws_sender = drive_hws_sender.clone();
@@ -183,11 +182,13 @@ pub fn build_ui(app: &adw::Application) {
 
     let drive_hws_main_context = MainContext::default();
     // The main loop executes the asynchronous block
-    drive_hws_main_context.spawn_local(clone!(@weak content_box, @weak loading_box, @strong data => async move {
-        while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
-            get_drivers(&content_box, &loading_box, drive_hws_state, &window);
-        }
-    }));
+    drive_hws_main_context.spawn_local(
+        clone!(@weak content_box, @weak loading_box, @strong data => async move {
+            while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
+                get_drivers(&content_box, &loading_box, drive_hws_state, &window);
+            }
+        }),
+    );
 }
 
 const DRIVER_MODIFY_PROG: &str = r###"
@@ -254,6 +255,8 @@ fn get_drivers(
                 .label("Device: ".to_owned() + &device)
                 .halign(gtk::Align::Center)
                 .valign(gtk::Align::Center)
+                .wrap(true)
+                .wrap_mode(gtk::pango::WrapMode::Word)
                 .build();
             device_label.add_css_class("deviceLabel");
 
@@ -272,12 +275,12 @@ fn get_drivers(
             main_box.append(&drivers_list_row);
 
             for driver in group.iter() {
-
                 let (log_loop_sender, log_loop_receiver) = async_channel::unbounded();
                 let log_loop_sender: async_channel::Sender<String> = log_loop_sender.clone();
 
                 let (log_status_loop_sender, log_status_loop_receiver) = async_channel::unbounded();
-                let log_status_loop_sender: async_channel::Sender<bool> = log_status_loop_sender.clone();
+                let log_status_loop_sender: async_channel::Sender<bool> =
+                    log_status_loop_sender.clone();
 
                 let driver_package_ind = driver.driver.to_owned();
                 let driver_expander_row = adw::ExpanderRow::new();
@@ -369,9 +372,14 @@ fn get_drivers(
                     .build();
                 driver_install_dialog
                     .add_response("driver_install_dialog_ok", "driver_install_dialog_ok_label");
-                driver_install_dialog
-                    .add_response("driver_install_dialog_reboot", "driver_install_dialog_reboot_label");
-                driver_install_dialog.set_response_appearance("driver_install_dialog_reboot", adw::ResponseAppearance::Suggested);
+                driver_install_dialog.add_response(
+                    "driver_install_dialog_reboot",
+                    "driver_install_dialog_reboot_label",
+                );
+                driver_install_dialog.set_response_appearance(
+                    "driver_install_dialog_reboot",
+                    adw::ResponseAppearance::Suggested,
+                );
                 //
 
                 //
