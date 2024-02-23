@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=PikaOS Driver Manager
 Exec=pika-drivers
-Icon=pika-drivers
+Icon=com.github.pikaos-linux.pikadrivers
 Terminal=false
 Type=Application
 Encoding=UTF-8
