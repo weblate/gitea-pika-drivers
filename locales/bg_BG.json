@@ -4,7 +4,7 @@
     "loading_label_label": "Сваляне база данни на драйвърите ...",
     "loading_no_internet_box_text_title": "Мрежова грешка!",
     "loading_no_internet_box_text_description": "Нужна е връзка с интернет, за да се свали база данни на драйвърите.",
-    "device_label_label_prefix": "Устройство:",
+    "device_label_label_prefix": "Устройство: ",
     "driver_install_button_label": "Инсталирай",
     "driver_install_button_tooltip_text": "Инсталирай пакетът драйвъри.",
     "driver_remove_button_label": "Деинсталирай",
