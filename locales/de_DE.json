@@ -1,10 +1,10 @@
 {
-    "app_name": "PikaOS Treiber Manager",
+    "app_name": "PikaOS Willkommen",
     "app_dev": "Cosmo",
     "loading_label_label": "Lade Treiberdatenbank herunter...",
     "loading_no_internet_box_text_title": "Netzwerkfehler!",
     "loading_no_internet_box_text_description": "Zum Herunterladen der Treiberdatenbank ist eine Internetverbindung erforderlich.",
-    "device_label_label_prefix": "Gerät:",
+    "device_label_label_prefix": "Gerät: ",
     "driver_install_button_label": "Installieren",
     "driver_install_button_tooltip_text": "Installiere das Treiberpaket.",
     "driver_remove_button_label": "Deinstallieren",
