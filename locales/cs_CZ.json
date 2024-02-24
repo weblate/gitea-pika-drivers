@@ -4,7 +4,7 @@
     "loading_label_label": "Stahování databáze ovladačů...",
     "loading_no_internet_box_text_title": "Chyba sítě!",
     "loading_no_internet_box_text_description": "K získání databáze ovladačů je potřeba přístup k internetu.",
-    "device_label_label_prefix": "Zařízení:",
+    "device_label_label_prefix": "Zařízení: ",
     "driver_install_button_label": "Instalovat",
     "driver_install_button_tooltip_text": "Nainstalovat balíček ovladače.",
     "driver_remove_button_label": "Odinstalovat",
