@@ -43,18 +43,18 @@ then
 	then
 		zenity --error --text "the following driver "$1" can not be removed only swapped"
 	else
-		echo "pikaos" | sudo -S bash -c "apt remove $pkg -y && sudo apt autoremove -y"
+		echo "pikaos" | sudo -S bash -c "DEBIAN_FRONTEND=noninteractive apt remove $pkg -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 	fi
 else
 	if echo $pkg | grep -i nvidia
  	then
-		echo "pikaos" | sudo -S bash -c "apt update -y && apt purge nvidia-driver-* -y && apt install $pkg -y && sudo apt autoremove -y"
+		echo "pikaos" | sudo -S bash -c "DEBIAN_FRONTEND=noninteractive apt update -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt purge nvidia-driver-* -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install $pkg -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 	else
 		if echo $pkg | grep -i mesa-hybrid
 		then
-			echo "pikaos" | sudo -S bash -c "apt update -y && apt install mesa-stable -y && apt install mesa-hybrid -y && sudo apt autoremove -y"
+			echo "pikaos" | sudo -S bash -c "DEBIAN_FRONTEND=noninteractive apt update -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install mesa-stable -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install mesa-hybrid -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 		else
-			echo "pikaos" | sudo -S bash -c "apt update -y && apt install $pkg -y && sudo apt autoremove -y"
+			echo "pikaos" | sudo -S bash -c "DEBIAN_FRONTEND=noninteractive apt update -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install $pkg -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 		fi
 	fi
 fi
@@ -100,18 +100,18 @@ then
 	then
 		zenity --error --text "the following driver "$1" can not be removed only swapped"
 	else
-		pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "apt remove $pkg -y && sudo apt autoremove -y"
+		pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "DEBIAN_FRONTEND=noninteractive apt remove $pkg -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 	fi
 else
 	if echo $pkg | grep -i nvidia
  	then
-		pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "apt update -y && apt purge nvidia-driver-* -y && apt install $pkg -y && sudo apt autoremove -y"
+		pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "DEBIAN_FRONTEND=noninteractive apt update -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt purge nvidia-driver-* -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install $pkg -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 	else
 		if echo $pkg | grep -i mesa-hybrid
 		then
-			pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "apt update -y && apt install mesa-stable -y && apt install mesa-hybrid -y && sudo apt autoremove -y"
+			pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "DEBIAN_FRONTEND=noninteractive apt update -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install mesa-stable -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install mesa-hybrid -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 		else
-			pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "apt update -y && apt install $pkg -y && sudo apt autoremove -y"
+			pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "DEBIAN_FRONTEND=noninteractive apt update -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install $pkg -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 		fi
 	fi
 fi

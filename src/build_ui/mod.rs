@@ -1,3 +1,4 @@
+use std::thread;
 use crate::config::*;
 use crate::save_window_size::save_window_size;
 use crate::DriverPackage;
@@ -6,7 +7,7 @@ use adw::prelude::*;
 use adw::{gio, glib};
 use duct::cmd;
 use gtk::prelude::{BoxExt, ButtonExt, GtkWindowExt, WidgetExt};
-use gtk::Orientation;
+use gtk::{Orientation, SizeGroupMode};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
@@ -14,6 +15,7 @@ use std::io::BufRead;
 use std::io::BufReader;
 use std::path::Path;
 use std::process::Command;
+use std::time::Duration;
 
 use users::*;
 
@@ -84,7 +86,6 @@ pub fn build_ui(app: &adw::Application) {
         .width_request(950)
         .height_request(500)
         .startup_id(APP_ID)
-        .hide_on_close(true)
         .build();
 
     if glib_settings.boolean("is-maximized") == true {
@@ -107,12 +108,20 @@ pub fn build_ui(app: &adw::Application) {
         .issue_url(APP_GITHUB.to_owned() + "/issues")
         .build();
 
+    let list_row_size_group = gtk::SizeGroup::new(SizeGroupMode::Horizontal);
+    let rows_size_group = gtk::SizeGroup::new(SizeGroupMode::Both);
+
     content_box.append(&window_title_bar);
 
     window_title_bar.pack_end(&credits_button.clone());
 
-    window.connect_hide(clone!(@weak window => move |_| save_window_size(&window, &glib_settings)));
-    window.connect_hide(clone!(@weak window => move |_| window.destroy()));
+    window.connect_close_request(move |window| {
+        if let Some(application) = window.application() {
+            save_window_size(&window, &glib_settings);
+            application.remove_window(window);
+        }
+        glib::Propagation::Proceed
+    });
 
     credits_button
         .connect_clicked(clone!(@weak credits_button => move |_| credits_window.present()));
@@ -193,7 +202,7 @@ pub fn build_ui(app: &adw::Application) {
         drive_hws_main_context.spawn_local(
             clone!(@weak content_box, @weak loading_box, @strong data => async move {
                 while let Ok(drive_hws_state) = drive_hws_receiver.recv().await {
-                    get_drivers(&content_box, &loading_box, drive_hws_state, &window);
+                    get_drivers(&content_box, &loading_box, drive_hws_state, &window, &list_row_size_group, &rows_size_group);
                 }
             }),
         );
@@ -240,6 +249,8 @@ fn get_drivers(
     loading_box: &gtk::Box,
     driver_array: Vec<DriverPackage>,
     window: &adw::ApplicationWindow,
+    list_row_size_group: &gtk::SizeGroup,
+    rows_size_group: &gtk::SizeGroup,
 ) {
     let main_box = gtk::Box::builder()
         .margin_top(20)
@@ -295,6 +306,8 @@ fn get_drivers(
                 .build();
             drivers_list_row.add_css_class("boxed-list");
 
+            list_row_size_group.add_widget(&drivers_list_row);
+
             main_box.append(&drivers_list_row);
 
             for driver in group.iter() {
@@ -304,6 +317,26 @@ fn get_drivers(
                 let (log_status_loop_sender, log_status_loop_receiver) = async_channel::unbounded();
                 let log_status_loop_sender: async_channel::Sender<bool> =
                     log_status_loop_sender.clone();
+
+                let (driver_status_loop_sender, driver_status_loop_receiver) = async_channel::unbounded();
+                let driver_status_loop_sender: async_channel::Sender<bool> =
+                    driver_status_loop_sender.clone();
+
+                let driver_package_ind2 = driver.driver.to_owned();
+                let driver_package_removeble = driver.removeble.to_owned();
+
+                gio::spawn_blocking(move || loop {
+                    thread::sleep(Duration::from_secs(5));
+                    let command_installed_status = Command::new("dpkg")
+                        .args(["-s", &driver_package_ind2])
+                        .output()
+                        .unwrap();
+                    if command_installed_status.status.success() {
+                        driver_status_loop_sender.send_blocking(true).expect("channel needs to be open")
+                    } else {
+                        driver_status_loop_sender.send_blocking(false).expect("channel needs to be open")
+                    }
+                });
 
                 let driver_package_ind = driver.driver.to_owned();
                 let driver_expander_row = adw::ExpanderRow::new();
@@ -353,20 +386,23 @@ fn get_drivers(
                 driver_action_box.append(&driver_install_button);
                 driver_content_row.add_suffix(&driver_action_box);
                 driver_expander_row.add_row(&driver_content_row);
+                rows_size_group.add_widget(&driver_action_box);
                 //
-                let command_installed_status = Command::new("dpkg")
-                    .args(["-s", &driver.clone().driver])
-                    .output()
-                    .unwrap();
-                if command_installed_status.status.success() {
-                    driver_install_button.set_sensitive(false);
-                    if driver.clone().removeble == true {
-                        driver_remove_button.set_sensitive(true);
+                let driver_status_loop_context = MainContext::default();
+                // The main loop executes the asynchronous block
+                driver_status_loop_context.spawn_local(clone!(@weak driver_remove_button, @weak driver_install_button, @strong driver_status_loop_receiver => async move {
+                while let Ok(driver_status_state) = driver_status_loop_receiver.recv().await {
+                        if driver_status_state == true {
+                            driver_install_button.set_sensitive(false);
+                            if driver_package_removeble == true {
+                                driver_remove_button.set_sensitive(true);
+                            }
+                        } else {
+                            driver_remove_button.set_sensitive(false);
+                            driver_install_button.set_sensitive(true);
+                        }
                     }
-                } else {
-                    driver_remove_button.set_sensitive(false);
-                    driver_install_button.set_sensitive(true);
-                }
+                }));
                 //
                 let driver_install_log_terminal_buffer = gtk::TextBuffer::builder().build();
 
