@@ -128,7 +128,7 @@ pub fn build_ui(app: &adw::Application) {
 
     println!("Downloading driver DB...");
     let check_internet_connection_cli = Command::new("ping")
-        .arg("ppa.pika-os.com")
+        .arg("iso.pika-os.com")
         .arg("-c 1")
         .output()
         .expect("failed to execute process");
