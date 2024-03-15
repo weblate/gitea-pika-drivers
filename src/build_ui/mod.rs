@@ -326,7 +326,6 @@ fn get_drivers(
                 let driver_package_removeble = driver.removeble.to_owned();
 
                 gio::spawn_blocking(move || loop {
-                    thread::sleep(Duration::from_secs(5));
                     let command_installed_status = Command::new("dpkg")
                         .args(["-s", &driver_package_ind2])
                         .output()
@@ -336,6 +335,7 @@ fn get_drivers(
                     } else {
                         driver_status_loop_sender.send_blocking(false).expect("channel needs to be open")
                     }
+                    thread::sleep(Duration::from_secs(6));
                 });
 
                 let driver_package_ind = driver.driver.to_owned();
@@ -491,19 +491,22 @@ fn get_drivers(
                         .expect("systemctl reboot failed to start");
                 }
                 });
-                gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind => move || {
-                        let command = driver_modify(log_loop_sender, &driver_package_ind);
+                let log_status_loop_sender_clone = log_status_loop_sender.clone();
+                let log_loop_sender_clone= log_loop_sender.clone();
+                let driver_package_ind_clone = driver_package_ind.clone();
+                        std::thread::spawn(move || {
+                        let command = driver_modify(log_loop_sender_clone, &driver_package_ind_clone);
                         match command {
                             Ok(_) => {
                                 println!("Status: Driver modify Successful");
-                                log_status_loop_sender.send_blocking(true).expect("The channel needs to be open.");
+                                log_status_loop_sender_clone.send_blocking(true).expect("The channel needs to be open.");
                             }
                             Err(_) => {
                                 println!("Status: Driver modify Failed");
-                                log_status_loop_sender.send_blocking(false).expect("The channel needs to be open.");
+                                log_status_loop_sender_clone.send_blocking(false).expect("The channel needs to be open.");
                             }
                         }
-                }));
+                });
             }));
                 driver_remove_button.connect_clicked(clone!(@weak driver_install_log_terminal,@weak driver_install_log_terminal_buffer, @weak driver_install_dialog, @strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind  => move |_| {
                 driver_install_log_terminal_buffer.delete(&mut driver_install_log_terminal_buffer.bounds().0, &mut driver_install_log_terminal_buffer.bounds().1);
@@ -518,19 +521,22 @@ fn get_drivers(
                         .expect("systemctl reboot failed to start");
                 }
                 });
-                gio::spawn_blocking(clone!(@strong log_loop_sender, @strong log_status_loop_sender, @strong driver_package_ind => move || {
-                        let command = driver_modify(log_loop_sender, &driver_package_ind);
+                let log_status_loop_sender_clone = log_status_loop_sender.clone();
+                let log_loop_sender_clone= log_loop_sender.clone();
+                let driver_package_ind_clone = driver_package_ind.clone();
+                        std::thread::spawn(move || {
+                        let command = driver_modify(log_loop_sender_clone, &driver_package_ind_clone);
                         match command {
                             Ok(_) => {
                                 println!("Status: Driver modify Successful");
-                                log_status_loop_sender.send_blocking(true).expect("The channel needs to be open.");
+                                log_status_loop_sender_clone.send_blocking(true).expect("The channel needs to be open.");
                             }
                             Err(_) => {
                                 println!("Status: Driver modify Failed");
-                                log_status_loop_sender.send_blocking(false).expect("The channel needs to be open.");
+                                log_status_loop_sender_clone.send_blocking(false).expect("The channel needs to be open.");
                             }
                         }
-                }));
+                });
             }));
                 //
                 drivers_list_row.append(&driver_expander_row);
