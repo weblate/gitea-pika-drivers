@@ -344,6 +344,12 @@ fn get_drivers(
                     .icon_name(driver.clone().icon)
                     .pixel_size(32)
                     .build();
+                let driver_status_icon = gtk::Image::builder()
+                    .icon_name("emblem-default")
+                    .pixel_size(24)
+                    .visible(false)
+                    .tooltip_text(t!("driver_status_icon_tooltip_text"))
+                    .build();
                 let driver_description_label = gtk::Label::builder()
                     .label(driver.clone().description)
                     .build();
@@ -370,6 +376,7 @@ fn get_drivers(
                 let driver_action_box = gtk::Box::builder().homogeneous(true).build();
                 driver_remove_button.add_css_class("destructive-action");
                 driver_expander_row.add_prefix(&driver_icon);
+                driver_expander_row.add_suffix(&driver_status_icon);
                 if driver.clone().experimental == true {
                     driver_expander_row.set_title(
                         &(driver.clone().driver
@@ -393,11 +400,13 @@ fn get_drivers(
                 driver_status_loop_context.spawn_local(clone!(@weak driver_remove_button, @weak driver_install_button, @strong driver_status_loop_receiver => async move {
                 while let Ok(driver_status_state) = driver_status_loop_receiver.recv().await {
                         if driver_status_state == true {
+                            driver_status_icon.set_visible(true);
                             driver_install_button.set_sensitive(false);
                             if driver_package_removeble == true {
                                 driver_remove_button.set_sensitive(true);
                             }
                         } else {
+                            driver_status_icon.set_visible(false);
                             driver_remove_button.set_sensitive(false);
                             driver_install_button.set_sensitive(true);
                         }
