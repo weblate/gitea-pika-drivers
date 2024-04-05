@@ -1,3 +1,9 @@
+pika-drivers (1.0.0-100pika7) pikauwu; urgency=medium
+
+  * Nvidia 550 no longer experimental
+
+ -- Pika <root@pika.com>  Wed, 11 Jan 2023 11:41:38 +0000
+
 pika-drivers (1.0.0-100pika6) pikauwu; urgency=medium
 
   * Temp internet check fix
