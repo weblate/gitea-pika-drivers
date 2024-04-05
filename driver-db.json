@@ -148,7 +148,7 @@
       "id": 18,
       "driver": "nvidia-driver-550",
       "icon": "nvidia",
-      "experimental": true,
+      "experimental": false,
       "removable": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
