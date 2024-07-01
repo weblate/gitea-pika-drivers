@@ -180,7 +180,7 @@
       "id": 22,
       "driver": "nvidia-driver-555",
       "icon": "nvidia",
-      "experimental": true,
+      "experimental": false,
       "removable": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
