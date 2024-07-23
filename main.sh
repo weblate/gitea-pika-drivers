@@ -4,6 +4,7 @@ cp -rvf ./* ./pika-drivers/
 cd ./pika-drivers/
 
 # Dead PikaOS3 Release Quirk?
+apt update
 apt-get install libglib2.0-0=2.78.0-2 libglib2.0-bin=2.78.0-2 libglib2.0-dev-bin=2.78.0-2 -y --allow-downgrades
 
 # Get build deps
