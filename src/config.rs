@@ -3,4 +3,4 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const APP_ICON: &str = "com.github.pikaos-linux.pikadrivers";
 pub const APP_GITHUB: &str = "https://github.com/PikaOS-Linux/pkg-pika-drivers";
 pub const DRIVER_DB_JSON_URL: &str =
-    "https://raw.githubusercontent.com/PikaOS-Linux/pkg-pika-drivers/main/driver-db.json";
+    "https://raw.githubusercontent.com/PikaOS-Linux/pkg-pika-drivers/OS3/driver-db.json";
