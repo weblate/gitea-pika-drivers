@@ -1,0 +1,21 @@
+{
+    "app_name": "Bienvenida de PikaOS",
+    "app_dev": "Cosmo",
+    "loading_label_label": "Descargando la base de datos de los controladores...",
+    "loading_no_internet_box_text_title": "¡Error de red!",
+    "loading_no_internet_box_text_description": "Se requiere una conexión a Internet para descargar la base de datos del controlador.",
+    "device_label_label_prefix": "Dispositivo: ",
+    "driver_install_button_label": "Instalar",
+    "driver_install_button_tooltip_text": "Instale el paquete de controladores.",
+    "driver_remove_button_label": "Desinstalar",
+    "driver_remove_button_tooltip_text": "Desinstalar el paquete de los controladores.",
+    "driver_expander_row_title_suffix": "(ADVERTENCIA: ¡ESTE CONTROLADOR ES EXPERIMENTAL, ÚSELO BAJO SU PROPIA RESPONSABILIDAD!)",
+    "driver_install_dialog_heading": "Registro de instalación del controlador",
+    "driver_install_dialog_ok_label": "Reiniciar más tarde",
+    "driver_install_dialog_reboot_label": "Reiniciar ahora",
+    "driver_install_dialog_success_true": "¡El controlador se instaló correctamente!",
+    "driver_install_dialog_success_false": "¡No se pudo instalar el controlador!",
+    "window_no_drivers_box_text_title": "Ningún dispositivo requiere controladores especiales",
+    "window_no_drivers_box_text_description": "Ningún dispositivo instalado en su sistema requiere un controlador especial de nuestra base de datos.",
+    "driver_status_icon_tooltip_text": "¡Éste controlador está instalado!"
+}
