@@ -2,7 +2,8 @@ Source: pika-drivers
 Section: admin
 Priority: optional
 Maintainer: Pika <root@pika.com>
-Build-Depends: debhelper (>= 9), cargo, build-essential,
+Build-Depends: debhelper (>= 9),
+            build-essential,
             debhelper,
             python3,
             meson,

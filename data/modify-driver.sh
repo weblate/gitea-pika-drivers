@@ -105,7 +105,7 @@ then
 else
 	if echo $pkg | grep -i nvidia
  	then
-		pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "DEBIAN_FRONTEND=noninteractive apt update -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt purge nvidia-driver-* -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install $pkg -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
+		pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY bash -c "DEBIAN_FRONTEND=noninteractive apt update -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt purge nvidia-driver-* nvidia-open-driver-* -y -o Dpkg::Options::='--force-confnew' && DEBIAN_FRONTEND=noninteractive apt install $pkg -y -o Dpkg::Options::='--force-confnew' && sudo DEBIAN_FRONTEND=noninteractive apt autoremove -y -o Dpkg::Options::='--force-confnew'"
 	else
 		if echo $pkg | grep -i mesa-hybrid
 		then

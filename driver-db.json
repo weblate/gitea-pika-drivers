@@ -98,54 +98,6 @@
     },
     {
       "id": 12,
-      "driver": "nvidia-driver-525",
-      "icon": "nvidia",
-      "experimental": false,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
-      "id": 13,
-      "driver": "nvidia-driver-525-open",
-      "icon": "nvidia",
-      "experimental": true,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
-      "id": 14,
-      "driver": "nvidia-driver-535",
-      "icon": "nvidia",
-      "experimental": false,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
-      "id": 15,
-      "driver": "nvidia-driver-535-open",
-      "icon": "nvidia",
-      "experimental": true,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
-      "id": 16,
-      "driver": "nvidia-driver-545",
-      "icon": "nvidia",
-      "experimental": false,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
-      "id": 17,
-      "driver": "nvidia-driver-545-open",
-      "icon": "nvidia",
-      "experimental": true,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
-      "id": 18,
       "driver": "nvidia-driver-550",
       "icon": "nvidia",
       "experimental": false,
@@ -153,31 +105,7 @@
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
     {
-      "id": 19,
-      "driver": "nvidia-driver-550-open",
-      "icon": "nvidia",
-      "experimental": true,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
-      "id": 20,
-      "driver": "xone-dkms",
-      "icon": "input-gaming",
-      "experimental": false,
-      "removable": true,
-      "detection": "lsusb | grep -i xbox"
-    },
-    {
-      "id": 21,
-      "driver": "intel-gpu-compute",
-      "icon": "intel",
-      "experimental": false,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
-    },
-    {
-      "id": 22,
+      "id": 13,
       "driver": "nvidia-driver-555",
       "icon": "nvidia",
       "experimental": false,
@@ -185,12 +113,36 @@
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
     {
-      "id": 23,
-      "driver": "nvidia-driver-555-open",
+      "id": 14,
+      "driver": "nvidia-driver-560",
       "icon": "nvidia",
       "experimental": true,
       "removable": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    }    
+    },
+    {
+      "id": 15,
+      "driver": "nvidia-open-driver-560",
+      "icon": "nvidia",
+      "experimental": true,
+      "removable": true,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
+    },
+    {
+      "id": 16,
+      "driver": "xone-dkms",
+      "icon": "input-gaming",
+      "experimental": false,
+      "removable": true,
+      "detection": "lsusb | grep -i xbox"
+    },
+    {
+      "id": 17,
+      "driver": "intel-gpu-compute",
+      "icon": "intel",
+      "experimental": false,
+      "removable": true,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
+    }
   ]
 }

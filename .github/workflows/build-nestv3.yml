@@ -1,4 +1,4 @@
-name: PikaOS Package Release
+name: PikaOS Package Build Only (amd64-v3)
 
 on:
   workflow_dispatch
@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: self-hosted
     container:
-      image: ghcr.io/pikaos-linux/pika-package-container:latest
+      image: ghcr.io/pikaos-linux/pikaos-builder:nestv3
       volumes:
         - /proc:/proc
       options: --privileged -it
@@ -30,17 +30,8 @@ jobs:
         known_hosts: ${{ secrets.KNOWN_HOSTS }}
         if_key_exists: replace
     
+    - name: Update APT Cache
+      run: apt-get update -y
+
     - name: Build Package
-      run: ./main.sh
-
-    - name: Release Package
-      run: ./release.sh
-
-    - name: Purge cache
-      uses: strrife/cloudflare-chunked-purge-action@master
-      env:
-        # Zone is required by both authentication methods
-        CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
-
-        CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
-        PURGE_URLS: ${{ vars.PURGE_URLS }}
+      run: ./mainv3.sh
