@@ -21,7 +21,7 @@ cp -vf ./cargo-config-v3.toml ./pika-drivers/.cargo/config.toml
 cd ./pika-drivers/
 
 # Get build deps
-apt-get build-dep ./
+apt-get build-dep ./ -y
 apt-get install curl -y
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | CARGO_HOME=/root/.cargo sh -s -- -y
 
