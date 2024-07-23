@@ -1,11 +1,13 @@
 #!/usr/bin/make -f
 
+export PATH := $(PATH):/root/.cargo/bin
+
 %:
 	dh ${@}
 
 override_dh_auto_install:
-	/root/.cargo/bin/cargo fetch
-	/root/.cargo/bin/cargo build --release
+	cargo fetch
+	cargo build --release
 	mkdir -p debian/pika-drivers/usr/bin/
 	cp -vf target/release/pika-drivers debian/pika-drivers/usr/bin/
 	chmod 755 debian/pika-drivers/usr/bin/pika-drivers
