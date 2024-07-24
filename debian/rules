@@ -1,6 +1,13 @@
 #!/usr/bin/make -f
 
+export PIKA_BUILD_ARCH = $(shell cat pika-build-arch)
 export PATH := $(PATH):/root/.cargo/bin
+
+override_dh_prep:
+# amd64 build prep
+ifeq (amd64-v3,$(PIKA_BUILD_ARCH))
+	export RUSTFLAGS  = "-C target-cpu=x86-64-v3"
+endif
 
 %:
 	dh ${@}

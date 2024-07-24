@@ -30,8 +30,11 @@ jobs:
     - name: Update APT Cache
       run: apt-get update -y
 
+    - name: Set Build Config
+      run: cp -vf ./pika-build-config/amd64-v3.sh ./pika-build-config.sh
+
     - name: Build Package
-      run: ./mainv3.sh
+      run: ./main.sh
 
     - name: Release Package
       run: ./release.sh
