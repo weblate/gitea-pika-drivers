@@ -6,7 +6,9 @@ export PATH := $(PATH):/root/.cargo/bin
 override_dh_prep:
 # amd64 build prep
 ifeq (amd64-v3,$(PIKA_BUILD_ARCH))
-export RUSTFLAGS = -C target-cpu=x86-64-v3 -C opt-level=3 -C lto=fat -C embed-bitcode -C codegen-units=1
+# Does not support LTO due to dylib-lto
+#export RUSTFLAGS = -C target-cpu=x86-64-v3 -C lto=fat -C embed-bitcode -C codegen-units=1 -C opt-level=3 -Zdylib-lto
+export RUSTFLAGS = -C target-cpu=x86-64-v3 -C opt-level=3
 endif
 
 %:
