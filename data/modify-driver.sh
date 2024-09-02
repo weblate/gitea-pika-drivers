@@ -37,7 +37,7 @@ then
 	pkg="$1"
 fi
 
-if dpkg -s "$1"
+if /usr/lib/pika/drivers/check-pkg.sh "$1"
 then
 	if echo $pkg | grep -i mesa
 	then
@@ -94,7 +94,7 @@ then
 	pkg="$1"
 fi
 
-if dpkg -s "$1"
+if /usr/lib/pika/drivers/check-pkg.sh "$1"
 then
 	if echo $pkg | grep -i mesa
 	then

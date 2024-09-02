@@ -326,8 +326,8 @@ fn get_drivers(
                 let driver_package_removeble = driver.removeble.to_owned();
 
                 gio::spawn_blocking(move || loop {
-                    let command_installed_status = Command::new("dpkg")
-                        .args(["-s", &driver_package_ind2])
+                    let command_installed_status = Command::new("/usr/lib/pika/drivers/check-pkg.sh")
+                        .arg(&driver_package_ind2)
                         .output()
                         .unwrap();
                     if command_installed_status.status.success() {
