@@ -113,10 +113,18 @@
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
     {
+      "id": 18,
+      "driver": "nvidia-open-driver-555",
+      "icon": "nvidia",
+      "experimental": true,
+      "removable": true,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
+    },
+    {
       "id": 14,
       "driver": "nvidia-driver-560",
       "icon": "nvidia",
-      "experimental": true,
+      "experimental": false,
       "removable": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
@@ -124,7 +132,7 @@
       "id": 15,
       "driver": "nvidia-open-driver-560",
       "icon": "nvidia",
-      "experimental": true,
+      "experimental": false,
       "removable": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
