@@ -151,6 +151,22 @@
       "experimental": false,
       "removable": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i intel"
+    },
+    {
+      "id": 20,
+      "driver": "nvidia-driver-565",
+      "icon": "nvidia",
+      "experimental": true,
+      "removable": true,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
+    },
+    {
+      "id": 21,
+      "driver": "nvidia-open-driver-565",
+      "icon": "nvidia",
+      "experimental": true,
+      "removable": true,
+      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     }
   ]
 }
