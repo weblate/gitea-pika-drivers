@@ -121,22 +121,6 @@
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
     {
-      "id": 14,
-      "driver": "nvidia-driver-560",
-      "icon": "nvidia",
-      "experimental": false,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
-      "id": 15,
-      "driver": "nvidia-open-driver-560",
-      "icon": "nvidia",
-      "experimental": false,
-      "removable": true,
-      "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
-    },
-    {
       "id": 16,
       "driver": "xone-dkms",
       "icon": "input-gaming",
@@ -156,7 +140,7 @@
       "id": 20,
       "driver": "nvidia-driver-565",
       "icon": "nvidia",
-      "experimental": true,
+      "experimental": false,
       "removable": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     },
@@ -164,7 +148,7 @@
       "id": 21,
       "driver": "nvidia-open-driver-565",
       "icon": "nvidia",
-      "experimental": true,
+      "experimental": false,
       "removable": true,
       "detection": "lspci -D | grep -iE 'VGA|3D' | grep -i nvidia"
     }
