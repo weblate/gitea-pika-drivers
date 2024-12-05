@@ -35,7 +35,7 @@ jobs:
         if_key_exists: replace
 
     - name: Run
-      run: git clone https://github.com/PikaOS-Linux/gitea-pika-first-setup
+      run: git clone https://github.com/PikaOS-Linux/gitea-pika-drivers
 
     - name: Run
-      run: ./gitea-pika-first-setup/.github/github_pushback.sh
+      run: ./gitea-pika-drivers/.github/github_pushback.sh
